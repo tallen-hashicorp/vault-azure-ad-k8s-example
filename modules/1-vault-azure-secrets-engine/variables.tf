@@ -45,10 +45,15 @@ variable "subscription_id" {
 variable "role_name" {
   description = "Name of the Vault role for Azure"
   type        = string
-  default     = "generated_role"
 }
 
 variable "role_ttl" {
+  description = "Time-to-live for credentials issued by the Azure Secrets Engine"
+  type        = string
+  default     = "30d"
+}
+
+variable "max_role_ttl" {
   description = "Time-to-live for credentials issued by the Azure Secrets Engine"
   type        = string
   default     = "30d"

@@ -24,5 +24,5 @@ resource "vault_azure_secret_backend_role" "resource_group_role" {
   }
 
   ttl = var.role_ttl
-  max_ttl = "35d"
+  max_ttl = var.max_role_ttl
 }

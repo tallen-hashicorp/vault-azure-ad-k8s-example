@@ -142,4 +142,14 @@ cd ..
 cd 1-dynamic-credentials
 
 terraform init
+terraform apply
+```
+
+Now we can test our new auth mount:
+```bash
+export VAULT_NAMESPACE="platform-team"
+
+vault read azure/creds/platform-team
+
+unset VAULT_NAMESPACE
 ```
