@@ -13,7 +13,7 @@ helm install vault hashicorp/vault \
 
 # Wait for Vault to be ready
 echo "Waiting for Vault to be ready..."
-sleep 5
+kubectl wait --namespace vault --for=jsonpath='{.status.phase}'=Running pod/vault-0
 
 # Step 2: Port-forward Vault to 8200 in the background
 kubectl -n vault port-forward services/vault 8200:8200 &
