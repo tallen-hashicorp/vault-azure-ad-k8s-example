@@ -36,7 +36,14 @@ done
 
 # Step 5: Extract the root token from init.json and output it
 ROOT_TOKEN=$(jq -r ".root_token" init.json)
+VAULT_TOKEN=$(jq -r ".root_token" init.json)
 echo "Root Token: $ROOT_TOKEN"
 
-# Step 6: Close the port-forwarding process
+# Step 6: Enable vault audit log
+vault audit enable file file_path=/tmp/vault-audit-log.txt
+
+
+export TF_VAR_vault_token=$ROOT_TOKEN
+
+# Step 7: Close the port-forwarding process
 kill $PORT_FORWARD_PID

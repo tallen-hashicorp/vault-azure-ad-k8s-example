@@ -1,6 +1,6 @@
 # Vault Azure AD K8s Example
 
-This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources.
+This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. For ease we are 
 
 ## Prerequisites
 * [Vault CLI installed](https://developer.hashicorp.com/vault/docs/install)
@@ -30,19 +30,31 @@ This will install, start, and initialize Vault.
 
 ### Step 3: Accessing Vault
 
-To access Vault locally, run the following command to set up port forwarding:
+To access Vault locally, run the following command to set up port forwarding in the background:
 
 ```bash
 kubectl -n vault port-forward services/vault 8200:8200 2>&1 >/dev/null & PORT_FORWARD_PID=$!; echo $PORT_FORWARD_PID > pid
 ```
 
-This will forward port `8200` to your local machine.
+This will forward port `8200` from the Vault service to your local machine and store the process ID in a file named `pid`. Running the command in the background ensures that your terminal remains free for other tasks.
 
-To stop the port forwarding, simply run:
+Alternatively, you can run:
 
 ```bash
-kill $PORT_FORWARD_PID
+kubectl -n vault port-forward services/vault 8200:8200
 ```
+
+However, this will occupy your terminal session until you manually stop the process.
+
+### Stopping the Port Forwarding
+
+If you used the background method, to stop the port forwarding, simply run:
+
+```bash
+kill $(cat pid)
+```
+
+This will stop the process and free up port `8200` on your local machine.
 
 Initially, you can use Vault's root token, which is output at the end of the script. Alternatively, you can find it in the `init.json` file.
 
@@ -56,5 +68,61 @@ kubectl delete ns vault
 
 ---
 
-## Configure Vault 
+Here's a cleaned-up and enhanced version of your block:
+
+---
+
+# 0. Basic Setup
+
+This initial setup will create the foundational components for the Vault platform team. Note that aside from the namespace creation, everything else is provided as an example of how modules can be structured. For simplicity, we will use the Vault root token in this example.
+
+### Components Created:
+- **Vault Platform Team Namespace**: A dedicated namespace for the platform team.
+- **Full Control Policy**: A policy granting full control over the platform team namespace.
+- **Userpass Authentication**: A simple user-password-based authentication method.
+- **JWT Authentication**: JWT-based authentication for integrating external services.
+
+### Pre-requisites:
+
+To ensure this setup functions correctly, the Vault root token must be set as the `TF_VAR_vault_token` environment variable. If you have run the previous Vault setup script in the same terminal session, this variable should already be set. If not, set it manually by running the following command with your root token:
+
+```bash
+export TF_VAR_vault_token="s.xxxxxxx"
+```
+
+### Steps to Build the Initial Vault Configuration:
+
+1. Navigate to the setup directory:
+
+```bash
+cd 0-platform-team-initial-setup
+```
+
+2. Initialize Terraform (this installs the required provider plugins and modules):
+
+```bash
+terraform init
+```
+
+3. Apply the configuration to build out the initial Vault setup:
+
+```bash
+terraform apply
+```
+
+After running these steps, the platform team namespace and other components will be created in Vault.
+
+# 1. Dynamic Credentials
+This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine to configure Tenant Azure Secret Engine. 
+
+**Pros**
+* Easy to setup using terraform
+
+**Cons**
+* We need to update update the Tenant Azure SE credentials
+
+## To Deploy
+
+
+
 
