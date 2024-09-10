@@ -12,6 +12,9 @@ server:
   standalone:
     enabled: true
   
+  # This is loud, change this if you wish
+  logLevel: trace
+  
   enterpriseLicense:
     secretName: "vault-licence"
     secretKey: "vault.hclic"

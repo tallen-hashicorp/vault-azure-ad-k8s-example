@@ -26,7 +26,7 @@ Here are the steps to retrieve your **Azure Tenant ID**, **Client ID**, **Client
    - Click add **+ App registration** at the top of the Microsoft Entra ID view.
    - Fill out the required fields:
      - **Name**: Give your app a name (e.g., "Vault Platform Team").
-     - **Supported account types**: Choose the appropriate option based on your needs (e.g., **Accounts in this organizational directory only**).
+     - **Supported account types**: Choose the appropriate option based on your needs (e.g., **Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant)**).
      - **Redirect URI**: You can leave this blank or provide one if needed for your application.
    - Click **Register** to create the app.
 3. **Get the Client ID**:
@@ -36,6 +36,14 @@ Here are the steps to retrieve your **Azure Tenant ID**, **Client ID**, **Client
    - Under **Client secrets**, click **+ New client secret**.
    - Provide a description (e.g., "Vault Secret") and choose an expiration period.
    - Click **Add**. The client secret will be generated and displayed. **Copy this immediately**, as you won’t be able to see it again after leaving this page.
+5. **Select API Permisions**:
+   - Select **API Permisions** on the left
+   - Click **Add A Permission** in the middle
+   - Select **APIs my organization uses**
+   - Add the following, not sure if this is all needed however this worked for me
+
+![API permissions](./docs/api-permissions.png)
+
 
 ### Step 4: Assign Proper Role to the App for Azure API Access (Optional but Necessary for Many Use Cases)
 
@@ -48,7 +56,7 @@ Here are the steps to retrieve your **Azure Tenant ID**, **Client ID**, **Client
 5. **Select a Role**:
    - For this we are going to make the app an owner so it can do eveything!!
    - Select **Privileged administrator roles** at the top
-   - Click **Contributor**
+   - Click **Owner**
    - **Warning** This will give this app full azure access, **not recomend for production**
 6. **Assign Access To**:
    - Under **Assign access to**, choose **User, group, or service principal**. 
@@ -61,6 +69,27 @@ Here are the steps to retrieve your **Azure Tenant ID**, **Client ID**, **Client
    - Click **Review + Assign**.
 
 This will grant your app the necessary permissions to interact with Azure resources.
+
+**NOTE: I needed to wait up to 10 minutes after creating this for this to work in Vault**
+
+### Step 5: Create a Resource Group in Azure
+
+1. **Go to "Resource Groups"**:
+   - In the Azure portal, navigate to **Resource Groups**. If it's not visible in the left-hand sidebar, use the search bar at the top to search for **Resource Groups**.
+2. **Click on + Create**:
+   - At the top of the **Resource Groups** page, click on the **+ Create** button.
+3. **Select Subscription**:
+   - In the **Basics** tab, under **Project Details**, select the appropriate **Subscription** where you want the resource group to reside.
+4. **Enter Resource Group Name**:
+   - Enter a unique name for your resource group in the **Resource Group Name** field (e.g., `azure-vault-group`).
+5. **Select a Region**:
+   - Under **Region**, choose the location where the resources in this group will be hosted. For example, you could choose **East US** or **West Europe**.
+6. **Add Tags (Optional)**:
+   - You can add tags to help organize your resources (e.g., by environment or project). This step is optional, but useful for managing resources in a structured way.
+7. **Click Review + Create**:
+   - Click **Review + Create** to review your settings before creating the resource group.
+8. **Create Resource Group**:
+   - After reviewing the information, click **Create**. Azure will create the resource group in the selected subscription and region.
 
 ### Summary:
 You now have:

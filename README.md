@@ -149,6 +149,8 @@ Now we can test our new auth mount:
 ```bash
 export VAULT_NAMESPACE="platform-team"
 
+vault list azure/roles
+vault write -f azure/rotate-root 
 vault read azure/creds/platform-team
 
 unset VAULT_NAMESPACE
