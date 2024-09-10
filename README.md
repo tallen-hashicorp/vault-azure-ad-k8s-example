@@ -44,6 +44,8 @@ To stop the port forwarding, simply run:
 kill $PORT_FORWARD_PID
 ```
 
+Initially, you can use Vault's root token, which is output at the end of the script. Alternatively, you can find it in the `init.json` file.
+
 ## Cleanup Vault
 
 To remove all Vault components and related Kubernetes resources, run:
