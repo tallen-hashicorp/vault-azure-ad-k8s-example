@@ -1,0 +1,21 @@
+# Vault Helm Chart Value Overrides
+global:
+  enabled: true
+  tlsDisable: true
+
+server:
+  # Use the Enterprise Image
+  image:
+    repository: "hashicorp/vault-enterprise"
+    tag: "1.17-ent"
+
+  standalone:
+    enabled: true
+  
+  enterpriseLicense:
+    secretName: "vault-licence"
+    secretKey: "vault.hclic"
+
+# Vault UI
+ui:
+  enabled: true
