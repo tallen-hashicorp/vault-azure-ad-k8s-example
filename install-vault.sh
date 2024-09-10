@@ -9,7 +9,7 @@ helm repo update hashicorp
 
 helm install vault hashicorp/vault \
     --namespace vault \
-    -f ./deployment/override-values.yml
+    -f ./vault-deployment/override-values.yml
 
 # Wait for Vault to be ready
 echo "Waiting for Vault to be ready..."
@@ -36,13 +36,13 @@ done
 
 # Step 5: Extract the root token from init.json and output it
 ROOT_TOKEN=$(jq -r ".root_token" init.json)
-VAULT_TOKEN=$(jq -r ".root_token" init.json)
+export VAULT_TOKEN=$(jq -r ".root_token" init.json)
 echo "Root Token: $ROOT_TOKEN"
 
 # Step 6: Enable vault audit log
 vault audit enable file file_path=/tmp/vault-audit-log.txt
 
-
+# Export the root token to use in subsequent TF steps
 export TF_VAR_vault_token=$ROOT_TOKEN
 
 # Step 7: Close the port-forwarding process
