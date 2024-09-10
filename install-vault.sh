@@ -35,15 +35,18 @@ for i in {0..2}; do
 done
 
 # Step 5: Extract the root token from init.json and output it
-ROOT_TOKEN=$(jq -r ".root_token" init.json)
+unset VAULT_TOKEN
 export VAULT_TOKEN=$(jq -r ".root_token" init.json)
-echo "Root Token: $ROOT_TOKEN"
+printf "\033[1;32mRoot Token: %s\033[0m\n" "$VAULT_TOKEN"
+
+
 
 # Step 6: Enable vault audit log
 vault audit enable file file_path=/tmp/vault-audit-log.txt
 
 # Export the root token to use in subsequent TF steps
-export TF_VAR_vault_token=$ROOT_TOKEN
+unset TF_VAR_vault_token
+export TF_VAR_vault_token=$(jq -r ".root_token" init.json)
 
 # Step 7: Close the port-forwarding process
 kill $PORT_FORWARD_PID

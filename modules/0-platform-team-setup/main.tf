@@ -39,13 +39,3 @@ resource "vault_auth_backend" "jwt" {
   type                  = "jwt"
   description           = "JWT authentication for platform team"
 }
-
-# Configure JWT role
-resource "vault_jwt_auth_backend_role" "platform_team_role" {
-  role_name             = "platform-team-role"
-  token_policies        = ["platform-team-policy"]
-
-  bound_audiences       = var.jwt_bound_audiences     # The expected audience claim value in JWTs
-  user_claim            = var.jwt_user_claim            # The claim in the JWT that will be used to identify the user
-  role_type             = "jwt"
-}

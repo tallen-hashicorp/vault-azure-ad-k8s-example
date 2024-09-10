@@ -23,7 +23,7 @@ If you prefer, you can copy the `vault.hclic` file into this directory (the `.gi
 Run the `install-vault.sh` script to set up Vault quickly:
 
 ```bash
-./install-vault.sh
+source install-vault.sh
 ```
 
 This will install, start, and initialize Vault.
@@ -84,7 +84,7 @@ This initial setup will create the foundational components for the Vault platfor
 
 ### Pre-requisites:
 
-To ensure this setup functions correctly, the Vault root token must be set as the `TF_VAR_vault_token` environment variable. If you have run the previous Vault setup script in the same terminal session, this variable should already be set. If not, set it manually by running the following command with your root token:
+To ensure this setup functions correctly, the Vault root token must be set as the `TF_VAR_vault_token` environment variable. If you have run the previous Vault setup script with `source` in the same terminal session, this variable should already be set. If not, set it manually by running the following command with your root token:
 
 ```bash
 export TF_VAR_vault_token="s.xxxxxxx"
@@ -123,6 +123,23 @@ This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine 
 
 ## To Deploy
 
+First, you need to get your Azure Tenant ID, Client ID, Client Secret, and Subscription ID. Follow the instructions in this [guide](./azure-credentials-setup.md) to retrieve these credentials from the Azure Portal.
 
 
+Next lets deploy our AD secrets engine into our `platform-team` namespace. First lets set the envrioment varibles of the Azure Tenant ID, Client ID, Client Secret, and Subscription ID we got in the previous step.
 
+```bash
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+export TF_VAR_subscription_id=""
+```
+
+Now we can run our terraform to deploy this:
+
+```bash
+cd ..
+cd 1-dynamic-credentials
+
+terraform init
+```
