@@ -105,6 +105,14 @@ After running these steps, the platform team namespace and other components will
 # 1. Dynamic Credentials
 This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine to configure Tenant Azure Secret Engine. 
 
+This diagram illustrates the dynamic credential provisioning process for platform and tenant teams using HashiCorp Vault with Azure AD, where Terraform modules (represented by swimlanes) manage the creation of namespaces and secret engines. Vault dynamically generates Azure credentials for each team, automating service principal registration and securely storing client credentials.
+
+![dynamic-creds](./docs/1-dynamic-creds1.png)
+
+This conceptual diagram shows how HashiCorp Vault dynamically manages Azure AD credentials for platform and tenant teams. The IAM team configures Azure AD, and Vault provisions short-lived credentials (client IDs and secrets), which are automatically generated through Terraform modules for each team. This approach simplifies secure credential management by rotating access credentials every 30 days.
+
+![dynamic-creds](./docs/1-dynamic-creds2.png)
+
 **Pros**
 * Easy to setup using terraform
 
@@ -112,13 +120,18 @@ This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine 
 * We need to update update the Tenant Azure SE credentials
 
 **Notes**
-* Does it matter if it expires, k8s will run just fine its just client_id for tf so just throw it away and make a new one every time. 
-* If rotate platform team then tenant stops working
+* If rotate platform team root then tenant stops working
     * To fix run tf again on `1-dynamic-credentials-tenant1`
-    * Then wait for 
-    2:10
+    * Then wait for 1 minute to 3 hours (for azure to persisit new service principal, this is not a Vault issue)
+    * At first I got `Insufficient privileges to complete the operation.` 
+    * In my test I updated with a new ID and Secret at 2:50
+    * by 3:20 (30 minutes later) I get `The identity of the calling application could not be established.`
+    * by 3:46 (60 minutes later) I get `was not found in the directory 'Default Directory'. This can happen if the application has not been installed by the administrator of the tenant or consented to by any user in the tenant. You may have sent your authentication request to the wrong tenant`
+    * For some reason the App registration was deleted hence the above error
+    * 
 
 ## To Deploy
+
 
 First, you need to get your Azure Tenant ID, Client ID, Client Secret, and Subscription ID. Follow the instructions in this [guide](./azure-credentials-setup.md) to retrieve these credentials from the Azure Portal.
 
