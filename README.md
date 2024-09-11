@@ -2,6 +2,8 @@
 
 This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. For ease we are 
 
+![dynamic-creds](./docs/1-dynamic-creds2.png)
+
 ## Prerequisites
 * [Vault CLI installed](https://developer.hashicorp.com/vault/docs/install)
 * A local Kubernetes (K8s) cluster
@@ -108,10 +110,6 @@ This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine 
 This diagram illustrates the dynamic credential provisioning process for platform and tenant teams using HashiCorp Vault with Azure AD, where Terraform modules (represented by swimlanes) manage the creation of namespaces and secret engines. Vault dynamically generates Azure credentials for each team, automating service principal registration and securely storing client credentials.
 
 ![dynamic-creds](./docs/1-dynamic-creds1.png)
-
-This conceptual diagram shows how HashiCorp Vault dynamically manages Azure AD credentials for platform and tenant teams. The IAM team configures Azure AD, and Vault provisions short-lived credentials (client IDs and secrets), which are automatically generated through Terraform modules for each team. This approach simplifies secure credential management by rotating access credentials every 30 days.
-
-![dynamic-creds](./docs/1-dynamic-creds2.png)
 
 **Pros**
 * Easy to setup using terraform
