@@ -14,6 +14,9 @@ server:
   
   # This is loud, change this if you wish
   logLevel: trace
+
+  extraEnvironmentVars:
+    AZURE_GO_SDK_LOG_LEVEL: "debug"
   
   enterpriseLicense:
     secretName: "vault-licence"

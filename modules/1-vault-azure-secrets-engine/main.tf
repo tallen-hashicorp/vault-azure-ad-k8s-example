@@ -20,8 +20,8 @@ resource "vault_azure_secret_backend_role" "resource_group_role" {
   role    = var.role_name
 
   azure_roles {
-    role_name = "Reader"
-    scope =  "/subscriptions/${var.subscription_id}/resourceGroups/azure-vault-group"
+    role_name = "Owner"
+    scope =  "/subscriptions/${var.subscription_id}"
   }
 
   ttl = var.role_ttl

@@ -96,17 +96,7 @@ export TF_VAR_vault_token="s.xxxxxxx"
 
 ```bash
 cd 0-platform-team-initial-setup
-```
-
-2. Initialize Terraform (this installs the required provider plugins and modules):
-
-```bash
 terraform init
-```
-
-3. Apply the configuration to build out the initial Vault setup:
-
-```bash
 terraform apply
 ```
 
@@ -121,8 +111,12 @@ This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine 
 **Cons**
 * We need to update update the Tenant Azure SE credentials
 
-**Cons**
+**Notes**
 * Does it matter if it expires, k8s will run just fine its just client_id for tf so just throw it away and make a new one every time. 
+* If rotate platform team then tenant stops working
+    * To fix run tf again on `1-dynamic-credentials-tenant1`
+    * Then wait for 
+    2:10
 
 ## To Deploy
 
@@ -168,9 +162,10 @@ terraform init
 terraform apply
 ```
 
-If you would like to test this works manualy with your creds use the following"
+If you would like to test this works manualy with your creds use the following, you need to wait 10-15 minutes before running thins:
 ```bash
 export VAULT_NAMESPACE="tenant1"
+vault read azure/config
 vault list azure/roles
 vault write -f azure/rotate-root 
 vault read azure/creds/tenant1
