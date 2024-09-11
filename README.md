@@ -119,9 +119,13 @@ This section covers dynamic credential generation using the parent namespace Azu
     1. Run `terraform apply` on `1-dynamic-credentials-tenant1`.
     2. Wait 1 minute to 3 hours for Azure to persist the new service principal (this delay is an Azure issue, not Vault).
     3. Possible errors include:
-        - `Insufficient privileges to complete the operation.`
-        - `The identity of the calling application could not be established.`
-        - `Application not found in the directory.`
+        - `Insufficient privileges to complete the operation.` Seen this when Azure has not yet persisited the App registrations
+        - `The identity of the calling application could not be established.` Seen that the App registration is deleted when seeing this message
+        - `Application not found in the directory.` Seen this later after App registration is deleted when seeing this message
+    4. testing
+        - 9:40pm created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manualy
+        - 9:51pm run tf apply on `1-dynamic-credentials-tenant1` to make tenant using that client_id\
+        - 9:53pm tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tommorow
 
 ## To Deploy
 
@@ -132,15 +136,16 @@ Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by fo
 Set the environment variables:
 
 ```bash
-export TF_VAR_tenant_id="your-tenant-id"
-export TF_VAR_client_id="your-client-id"
-export TF_VAR_client_secret="your-client-secret"
-export TF_VAR_subscription_id="your-subscription-id"
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+export TF_VAR_subscription_id=""
 ```
 
 Then deploy using Terraform:
 
 ```bash
+cd ..
 cd 1-dynamic-credentials-platform-team
 terraform init
 terraform apply
@@ -161,6 +166,7 @@ unset VAULT_NAMESPACE
 Next, provision a tenant. This only requires the `TF_VAR_subscription_id` and `TF_VAR_tenant_id`. The `client_id` and `client_secret` will be generated automatically using the platform team’s Azure Secret Engine.
 
 ```bash
+cd ..
 cd 1-dynamic-credentials-tenant1
 terraform init
 terraform apply
