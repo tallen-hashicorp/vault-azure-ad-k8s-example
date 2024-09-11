@@ -1,64 +1,65 @@
-# Vault Azure AD K8s Example
+# Vault Azure AD Kubernetes Example
 
-This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. For ease we are 
+This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. We will walk through the setup of Vault, dynamic credential generation using Azure AD, and the use of Terraform modules to manage these configurations.
 
 ![dynamic-creds](./docs/1-dynamic-creds2.png)
 
 ## Prerequisites
-* [Vault CLI installed](https://developer.hashicorp.com/vault/docs/install)
-* A local Kubernetes (K8s) cluster
-* An Azure account
-* A Vault Enterprise license
+
+Before proceeding, ensure you have the following:
+
+- [Vault CLI installed](https://developer.hashicorp.com/vault/docs/install)
+- A local Kubernetes (K8s) cluster
+- An Azure account with necessary permissions
+- A Vault Enterprise license
 
 ## Starting Vault
 
-For this example, we are using a local Kubernetes cluster with Vault Enterprise deployed via Helm.
+We will use a local Kubernetes cluster with Vault Enterprise deployed via Helm.
 
 ### Step 1: Prepare the Vault License
 
 Before deploying Vault, you need to create a Kubernetes secret containing your Vault Enterprise license. Replace `vault.hclic` with the actual path to your license file.
 
-If you prefer, you can copy the `vault.hclic` file into this directory (the `.gitignore` file already includes this to prevent it from being committed).
+Alternatively, you can copy the `vault.hclic` file into this directory (the `.gitignore` file already prevents this from being committed).
 
 ### Step 2: Deploy Vault
 
-Run the `install-vault.sh` script to set up Vault quickly:
+Run the `install-vault.sh` script to install and initialize Vault:
 
 ```bash
 source install-vault.sh
 ```
 
-This will install, start, and initialize Vault.
+This script will set up Vault and configure it for this example.
 
 ### Step 3: Accessing Vault
 
-To access Vault locally, run the following command to set up port forwarding in the background:
+To access Vault locally, set up port forwarding in the background with the following command:
 
 ```bash
 kubectl -n vault port-forward services/vault 8200:8200 2>&1 >/dev/null & PORT_FORWARD_PID=$!; echo $PORT_FORWARD_PID > pid
 ```
 
-This will forward port `8200` from the Vault service to your local machine and store the process ID in a file named `pid`. Running the command in the background ensures that your terminal remains free for other tasks.
-
-Alternatively, you can run:
+This forwards port `8200` from Vault to your local machine and stores the process ID in a file named `pid`. Alternatively, you can run:
 
 ```bash
 kubectl -n vault port-forward services/vault 8200:8200
 ```
 
-However, this will occupy your terminal session until you manually stop the process.
+This will occupy your terminal until manually stopped.
 
 ### Stopping the Port Forwarding
 
-If you used the background method, to stop the port forwarding, simply run:
+If you used the background method, stop the process by running:
 
 ```bash
 kill $(cat pid)
 ```
 
-This will stop the process and free up port `8200` on your local machine.
+This frees up port `8200` on your local machine.
 
-Initially, you can use Vault's root token, which is output at the end of the script. Alternatively, you can find it in the `init.json` file.
+You can use Vault’s root token (output at the end of the setup script) to log in. Alternatively, check the `init.json` file for the root token.
 
 ## Cleanup Vault
 
@@ -70,23 +71,19 @@ kubectl delete ns vault
 
 ---
 
-Here's a cleaned-up and enhanced version of your block:
-
----
-
 # 0. Basic Setup
 
-This initial setup will create the foundational components for the Vault platform team. Note that aside from the namespace creation, everything else is provided as an example of how modules can be structured. For simplicity, we will use the Vault root token in this example.
+The initial setup creates foundational components for the Vault platform team. Aside from the namespace creation, the rest of the setup is an example of how modules can be structured. We use Vault's root token for simplicity in this example.
 
 ### Components Created:
 - **Vault Platform Team Namespace**: A dedicated namespace for the platform team.
 - **Full Control Policy**: A policy granting full control over the platform team namespace.
-- **Userpass Authentication**: A simple user-password-based authentication method.
-- **JWT Authentication**: JWT-based authentication for integrating external services.
+- **Userpass Authentication**: A basic user-password authentication method.
+- **JWT Authentication**: For external service integration.
 
-### Pre-requisites:
+### Prerequisites:
 
-To ensure this setup functions correctly, the Vault root token must be set as the `TF_VAR_vault_token` environment variable. If you have run the previous Vault setup script with `source` in the same terminal session, this variable should already be set. If not, set it manually by running the following command with your root token:
+Make sure the Vault root token is set as the `TF_VAR_vault_token` environment variable. If you ran the previous Vault setup script with `source`, this variable should already be set. If not, run the following command with your root token:
 
 ```bash
 export TF_VAR_vault_token="s.xxxxxxx"
@@ -102,59 +99,55 @@ terraform init
 terraform apply
 ```
 
-After running these steps, the platform team namespace and other components will be created in Vault.
+This creates the platform team namespace and additional components in Vault.
 
 # 1. Dynamic Credentials
-This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine to configure Tenant Azure Secret Engine. 
 
-This diagram illustrates the dynamic credential provisioning process for platform and tenant teams using HashiCorp Vault with Azure AD, where Terraform modules (represented by swimlanes) manage the creation of namespaces and secret engines. Vault dynamically generates Azure credentials for each team, automating service principal registration and securely storing client credentials.
+This section covers dynamic credential generation using the parent namespace Azure Secret Engine to configure the Tenant Azure Secret Engine.
 
 ![dynamic-creds](./docs/1-dynamic-creds1.png)
 
-**Pros**
-* Easy to setup using terraform
+### Pros
+- Easy to set up using Terraform.
 
-**Cons**
-* We need to rerun terraform for every tenant once every 30 days to refresh the credentials from the platform-team namespace
-* Long lived credentials
+### Cons
+- Terraform must be rerun every 30 days to refresh credentials.
+- Long-lived credentials need rotation.
 
-**Notes**
-* If rotate platform team root then tenant stops working
-    * To fix run tf again on `1-dynamic-credentials-tenant1`
-    * Then wait for 1 minute to 3 hours (for azure to persisit new service principal, this is not a Vault issue)
-    * At first I got `Insufficient privileges to complete the operation.` 
-    * In my test I updated with a new ID and Secret at 2:50
-    * by 3:20 (30 minutes later) I get `The identity of the calling application could not be established.`
-    * by 3:46 (60 minutes later) I get `was not found in the directory 'Default Directory'. This can happen if the application has not been installed by the administrator of the tenant or consented to by any user in the tenant. You may have sent your authentication request to the wrong tenant`
-    * For some reason the App registration was deleted hence the above error
-    * 
+### Notes
+- If the platform team root is rotated, the tenant stops working. To fix this:
+    1. Run `terraform apply` on `1-dynamic-credentials-tenant1`.
+    2. Wait 1 minute to 3 hours for Azure to persist the new service principal (this delay is an Azure issue, not Vault).
+    3. Possible errors include:
+        - `Insufficient privileges to complete the operation.`
+        - `The identity of the calling application could not be established.`
+        - `Application not found in the directory.`
 
 ## To Deploy
 
+Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by following the steps in the [Azure Credentials Setup Guide](./azure-credentials-setup.md).
 
-First, you need to get your Azure Tenant ID, Client ID, Client Secret, and Subscription ID. Follow the instructions in this [guide](./azure-credentials-setup.md) to retrieve these credentials from the Azure Portal.
+### Step 1: Deploy Azure Secret Engine for Platform Team
 
-
-Next lets deploy our AD secrets engine into our `platform-team` namespace. First lets set the envrioment varibles of the Azure Tenant ID, Client ID, Client Secret, and Subscription ID we got in the previous step.
+Set the environment variables:
 
 ```bash
-export TF_VAR_tenant_id=""
-export TF_VAR_client_id=""
-export TF_VAR_client_secret=""
-export TF_VAR_subscription_id=""
+export TF_VAR_tenant_id="your-tenant-id"
+export TF_VAR_client_id="your-client-id"
+export TF_VAR_client_secret="your-client-secret"
+export TF_VAR_subscription_id="your-subscription-id"
 ```
 
-Now we can run our terraform to deploy this:
+Then deploy using Terraform:
 
 ```bash
-cd ..
 cd 1-dynamic-credentials-platform-team
-
 terraform init
 terraform apply
 ```
 
-If you would like to test this works manualy with your creds use the following"
+To manually test:
+
 ```bash
 export VAULT_NAMESPACE="platform-team"
 vault list azure/roles
@@ -163,18 +156,18 @@ vault read azure/creds/platform-team
 unset VAULT_NAMESPACE
 ```
 
-## Provision Tenant
-Next we can provision a tenenat, run the following. This will only take the `TF_VAR_subscription_id` & `TF_VAR_tenant_id` the `client_id` & `client_secret` will be generated using the platform teams azure secret engine. 
+### Step 2: Provision Tenant
+
+Next, provision a tenant. This only requires the `TF_VAR_subscription_id` and `TF_VAR_tenant_id`. The `client_id` and `client_secret` will be generated automatically using the platform team’s Azure Secret Engine.
 
 ```bash
-cd ..
 cd 1-dynamic-credentials-tenant1
-
 terraform init
 terraform apply
 ```
 
-If you would like to test this works manualy with your creds use the following, you need to wait 10-15 minutes before running thins:
+To manually test (wait 10-15 minutes before running this):
+
 ```bash
 export VAULT_NAMESPACE="tenant1"
 vault read azure/config
@@ -184,18 +177,14 @@ vault read azure/creds/tenant1
 unset VAULT_NAMESPACE
 ```
 
-
-
-
+---
 
 # 2. Plugin Workload Identity Federation (WIF)
+
 In this section, we will integrate Workload Identity Federation (WIF) to enable secure, token-based authentication between HashiCorp Vault and Azure AD. WIF allows workloads running in Kubernetes or other environments to authenticate with Azure AD without needing long-lived credentials. By using short-lived tokens, this approach enhances security and scalability when accessing Azure resources. We will configure the necessary Vault plugins and demonstrate how Terraform can manage WIF setup, ensuring that your platform and tenant teams can securely access Azure resources without manual credential handling.
 
-**Pros**
-* Short lived credentials
+### Pros
+- Short-lived credentials, enhancing security.
 
-**Cons**
-* Needs Vault 1.17
-
-**Notes**
-* Do we need to update
+### Cons
+- Requires Vault 1.17 or later.
