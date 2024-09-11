@@ -115,7 +115,8 @@ This diagram illustrates the dynamic credential provisioning process for platfor
 * Easy to setup using terraform
 
 **Cons**
-* We need to update update the Tenant Azure SE credentials
+* We need to rerun terraform for every tenant once every 30 days to refresh the credentials from the platform-team namespace
+* Long lived credentials
 
 **Notes**
 * If rotate platform team root then tenant stops working
@@ -182,3 +183,19 @@ vault write -f azure/rotate-root
 vault read azure/creds/tenant1
 unset VAULT_NAMESPACE
 ```
+
+
+
+
+
+# 2. Plugin Workload Identity Federation (WIF)
+In this section, we will integrate Workload Identity Federation (WIF) to enable secure, token-based authentication between HashiCorp Vault and Azure AD. WIF allows workloads running in Kubernetes or other environments to authenticate with Azure AD without needing long-lived credentials. By using short-lived tokens, this approach enhances security and scalability when accessing Azure resources. We will configure the necessary Vault plugins and demonstrate how Terraform can manage WIF setup, ensuring that your platform and tenant teams can securely access Azure resources without manual credential handling.
+
+**Pros**
+* Short lived credentials
+
+**Cons**
+* Needs Vault 1.17
+
+**Notes**
+* Do we need to update
