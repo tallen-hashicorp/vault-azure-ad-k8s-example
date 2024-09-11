@@ -121,6 +121,9 @@ This will use Dynamic Credentials from the Parent Namespace Azure Secret Engine 
 **Cons**
 * We need to update update the Tenant Azure SE credentials
 
+**Cons**
+* Does it matter if it expires, k8s will run just fine its just client_id for tf so just throw it away and make a new one every time. 
+
 ## To Deploy
 
 First, you need to get your Azure Tenant ID, Client ID, Client Secret, and Subscription ID. Follow the instructions in this [guide](./azure-credentials-setup.md) to retrieve these credentials from the Azure Portal.
@@ -148,16 +151,14 @@ terraform apply
 If you would like to test this works manualy with your creds use the following"
 ```bash
 export VAULT_NAMESPACE="platform-team"
-
 vault list azure/roles
 vault write -f azure/rotate-root 
 vault read azure/creds/platform-team
-
 unset VAULT_NAMESPACE
 ```
 
 ## Provision Tenant
-Next we can provision a tenenat, run the following:
+Next we can provision a tenenat, run the following. This will only take the `TF_VAR_subscription_id` & `TF_VAR_tenant_id` the `client_id` & `client_secret` will be generated using the platform teams azure secret engine. 
 
 ```bash
 cd ..
@@ -165,4 +166,13 @@ cd 1-dynamic-credentials-tenant1
 
 terraform init
 terraform apply
+```
+
+If you would like to test this works manualy with your creds use the following"
+```bash
+export VAULT_NAMESPACE="tenant1"
+vault list azure/roles
+vault write -f azure/rotate-root 
+vault read azure/creds/tenant1
+unset VAULT_NAMESPACE
 ```
