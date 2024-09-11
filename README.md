@@ -139,13 +139,13 @@ Now we can run our terraform to deploy this:
 
 ```bash
 cd ..
-cd 1-dynamic-credentials
+cd 1-dynamic-credentials-platform-team
 
 terraform init
 terraform apply
 ```
 
-Now we can test our new auth mount:
+If you would like to test this works manualy with your creds use the following"
 ```bash
 export VAULT_NAMESPACE="platform-team"
 
@@ -154,4 +154,15 @@ vault write -f azure/rotate-root
 vault read azure/creds/platform-team
 
 unset VAULT_NAMESPACE
+```
+
+## Provision Tenant
+Next we can provision a tenenat, run the following:
+
+```bash
+cd ..
+cd 1-dynamic-credentials-tenant1
+
+terraform init
+terraform apply
 ```
