@@ -36,7 +36,7 @@ done
 
 # Step 5: Extract the root token from init.json and output it
 unset VAULT_TOKEN
-export VAULT_TOKEN=$(jq -r ".root_token" init.json)
+VAULT_TOKEN=$(jq -r ".root_token" init.json)
 printf "\033[1;32mRoot Token: %s\033[0m\n" "$VAULT_TOKEN"
 
 

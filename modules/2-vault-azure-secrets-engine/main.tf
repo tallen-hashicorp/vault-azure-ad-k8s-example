@@ -13,7 +13,17 @@ resource "vault_azure_secret_backend" "azure" {
   identity_token_audience = var.identity_token_audience
 }
 
-# Create an example Azure role for managing resource groups
+resource "vault_identity_oidc" "server" {
+  
+}
+
+resource "vault_identity_oidc_client" "test" {
+  name          = "azure"
+  id_token_ttl     = 2400
+  access_token_ttl = 7200
+}
+
+# # Create an example Azure role for managing resource groups
 resource "vault_azure_secret_backend_role" "resource_group_role" {
   backend = vault_azure_secret_backend.azure.path
   role    = var.role_name
@@ -23,3 +33,5 @@ resource "vault_azure_secret_backend_role" "resource_group_role" {
     scope =  "/subscriptions/${var.subscription_id}/*"
   }
 }
+
+

@@ -196,9 +196,12 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Cons
 - Requires Vault 1.17 or later.
+- Added complexity
+    - identity/oidc needs to be configured and enabled
+    - Need to ensure that Vault openid-configuration and public JWKS APIs are network-reachable by Azure
 
 ### Notes
-- 
+- HCP Vault is 1.15 🤦‍♂️
 
 ## To Deploy
 For this we need Vault deployed using https and it needs to be network-reachable by Azure. For this I'm going to use a new instance and take advatage of [HCP Vault](https://developer.hashicorp.com/hcp/docs/vault/what-is-hcp-vault). 
@@ -241,10 +244,10 @@ Now we need to configure Azure, a more detailed guide can be found for Vault [he
 6. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidc/plugins`**
 
 ```bash
-export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc/plugins"
+export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc"
 ```
 
-for example `export TF_VAR_identity_token_audience="vault-cluster-public-vault-.z1.hashicorp.cloud:8200/v1/identity/oidc/plugins"`
+for example `export TF_VAR_identity_token_audience="vault-cluster-public-vault-.z1.hashicorp.cloud:8200/v1/identity/oidc"`
 
 7. Now we will setup the azure secrets engine in the platform team account, you probably have `TF_VAR_client_id`, `TF_VAR_tenant_id` & `TF_VAR_subscription_id` already set but if not go back to [here](#step-1-deploy-azure-secret-engine-for-platform-team)
 

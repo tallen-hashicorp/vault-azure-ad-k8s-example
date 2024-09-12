@@ -25,11 +25,6 @@ variable "subscription_id" {
   type        = string
 }
 
-variable "identity_token_audience" {
-  description = "Azure Identity Token Audience"
-  type        = string
-}
-
 variable "vault_addr" {
   description = "The Vault Address"
   type        = string
