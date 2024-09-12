@@ -126,6 +126,7 @@ This section covers dynamic credential generation using the parent namespace Azu
         - 9:40pm created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manualy
         - 9:51pm run tf apply on `1-dynamic-credentials-tenant1` to make tenant using that client_id\
         - 9:53pm tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tommorow
+        - Still running into the `was not found in the directory 'Default Directory'` I feel like this is a permision issue as I'm trying to grant owner but not sure at this stage. 
 
 ## To Deploy
 
@@ -194,3 +195,31 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Cons
 - Requires Vault 1.17 or later.
+
+### Notes
+- 
+
+## To Deploy
+For this we need Vault deployed using https and it needs to be network-reachable by Azure. For this I'm going to use a new instance and take advatage of [HCP Vault](https://developer.hashicorp.com/hcp/docs/vault/what-is-hcp-vault). 
+
+The following guide is taken from [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif)
+
+1. Ensure that Vault [openid-configuration](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-identity-token-issuer-s-openid-configuration) and [public JWKS](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-identity-token-issuer-s-public-jwks) APIs are network-reachable by Azure. We recommend using an API proxy or gateway if you need to limit Vault API exposure.
+
+2. Configure a [federated identity credential](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers) on a dedicated application registration in Azure to establish a trust relationship with Vault.
+
+    - The issuer URL must point at your [Vault plugin identity token issuer](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-workload-identity-issuer-s-openid-configuration) with the /.well-known/openid-configuration suffix removed. For example: https://host:port/v1/identity/oidc/plugins.
+
+    - The subject identifier must match the unique sub claim issued by plugin identity tokens. The subject identifier should have the form plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>.
+
+    - The audience should be under 600 characters. The default value in Azure is api://AzureADTokenExchange.
+
+
+
+
+## Choosing between dynamic or existing service principals
+Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
+
+Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
+
+An important limitation when using an existing service principal is that Azure limits the number of passwords for a single Application. This limit is based on Application object size and isn't firmly specified, but in practice hundreds of passwords can be issued per Application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL, or by creating another Vault role against a different Azure service principal configured with the same permissions.
