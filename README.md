@@ -113,6 +113,7 @@ This section covers dynamic credential generation using the parent namespace Azu
 ### Cons
 - Terraform must be rerun every 30 days to refresh credentials.
 - Long-lived credentials need rotation.
+- Cant run this all at once, the problem I found is that it takes up to an hour for the creds to work when rotated!
 
 ### Notes
 - If the platform team root is rotated, the tenant stops working. To fix this:
