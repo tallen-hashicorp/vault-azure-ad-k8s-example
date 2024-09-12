@@ -211,6 +211,7 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - Getting `No matching federated identity record found for presented assertion issuer 'http://10.1.8.46:8200/v1/platform-team/identity/oidc/plugins'`
     - No Idea why this changed
     - `10.1.8.46` is the pod IP
+- Feeling like my SSH hack will not help us and this needs to be legit
 
 ## To Deploy
 For this we need Vault deployed using https and it needs to be network-reachable by Azure.
