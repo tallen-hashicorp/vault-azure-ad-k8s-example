@@ -14,7 +14,7 @@ resource "vault_azure_secret_backend" "azure" {
 }
 
 resource "vault_identity_oidc" "server" {
-  
+  issuer = "https://vault.the-tech-tutorial.com:8220"
 }
 
 resource "vault_identity_oidc_client" "test" {

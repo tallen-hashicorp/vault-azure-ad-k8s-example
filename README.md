@@ -202,6 +202,7 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
+- Getting `No matching federated identity record found for presented assertion issuer 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'.` error
 
 ## To Deploy
 For this we need Vault deployed using https and it needs to be network-reachable by Azure.
@@ -224,6 +225,16 @@ sudo apt install nginx certbot python3-certbot-nginx
 * hit https://vault.the-tech-tutorial.com:8220/
 * Woop local vault with vault https, I of course do not recomend this insanity in production. 
 
+If we are starting here you need to set the relevent env vars:
+
+```bash
+export TF_VAR_vault_addr="http://127.0.0.1:8200"
+export TF_VAR_subscription_id=""
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+```
+
 
 1. Now we can setup Vault, run the following the setup the inital namespace etc in Vault
 
@@ -242,16 +253,16 @@ Now we need to configure Azure, a more detailed guide can be found for Vault [he
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
-| Issuer             | `https://{VAULT_URL}:8200/v1/identity/oidc/plugins` |
-| Subject identifier | `platform-team:secret:azure`                        |
-| Name               | `Vault`                                             |
+| Issuer             | `https://{VAULT_URL}:8200/v1/platform-team/identity/oidc` |
+| Subject identifier | `plugin-identity:platform-team:secret:azure`              |
+| Name               | `Vault`                                                   |
 
 ![alt text](docs/azure-screenshot1.png)
 
-4. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidc/plugins`**
+4. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidcs`**
 
 ```bash
-export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc"
+export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc"
 ```
 
 for example `export TF_VAR_identity_token_audience="vault-cluster-public-vault-.z1.hashicorp.cloud:8200/v1/identity/oidc"`

@@ -2,7 +2,7 @@ module "tier-1-azure-ad" {
   source        = "../modules/2-vault-azure-secrets-engine"
   vault_address = var.vault_addr
   vault_token   = var.vault_token
-  vault_namespace = "admin/platform-team/" # This should use data from the other module
+  vault_namespace = "platform-team" # This should use data from the other module
 
   role_name = "platform-team"
 
