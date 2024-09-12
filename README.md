@@ -1,8 +1,10 @@
+Here is the spell-checked version of the document:
+
+---
+
 # Vault Azure AD Kubernetes Example
 
 This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. We will walk through the setup of Vault, dynamic credential generation using Azure AD, and the use of Terraform modules to manage these configurations.
-
-![dynamic-creds](./docs/1-dynamic-creds2.png)
 
 ## Prerequisites
 
@@ -105,27 +107,28 @@ This creates the platform team namespace and additional components in Vault.
 
 This section covers dynamic credential generation using the parent namespace Azure Secret Engine to configure the Tenant Azure Secret Engine.
 
-![dynamic-creds](./docs/1-dynamic-creds1.png)
-
 ### Pros
 - Easy to set up using Terraform.
 
 ### Cons
 - Terraform must be rerun every 30 days to refresh credentials.
 - Long-lived credentials need rotation.
+- Can't run this all at once. The problem I found is that it takes up to an hour for the credentials to work when rotated!
 
 ### Notes
 - If the platform team root is rotated, the tenant stops working. To fix this:
     1. Run `terraform apply` on `1-dynamic-credentials-tenant1`.
     2. Wait 1 minute to 3 hours for Azure to persist the new service principal (this delay is an Azure issue, not Vault).
     3. Possible errors include:
-        - `Insufficient privileges to complete the operation.` Seen this when Azure has not yet persisited the App registrations
-        - `The identity of the calling application could not be established.` Seen that the App registration is deleted when seeing this message
-        - `Application not found in the directory.` Seen this later after App registration is deleted when seeing this message
-    4. testing
-        - 9:40pm created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manualy
-        - 9:51pm run tf apply on `1-dynamic-credentials-tenant1` to make tenant using that client_id\
-        - 9:53pm tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tommorow
+        - `Insufficient privileges to complete the operation.` Seen this when Azure has not yet persisted the App registrations.
+        - `The identity of the calling application could not be established.` Seen when the App registration is deleted.
+        - `Application not found in the directory.` Seen this later after App registration is deleted.
+    4. Testing:
+        - 9:40 PM created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manually.
+        - 9:51 PM ran `terraform apply` on `1-dynamic-credentials-tenant1` to make tenant using that client_id.
+        - 9:53 PM tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tomorrow.
+        - Still running into `was not found in the directory 'Default Directory'`. I feel like this is a permission issue as I'm trying to grant owner, but not sure at this stage.
+        - Belive this is now fixed
 
 ## To Deploy
 
@@ -194,3 +197,110 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Cons
 - Requires Vault 1.17 or later.
+- Added complexity:
+    - `identity/oidc` needs to be configured and enabled.
+    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
+
+### Notes
+- HCP Vault is 1.15 🤦‍♂️
+- Getting `No matching federated identity record found for presented assertion issuer 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'` error.
+- Getting `No matching federated identity record found for presented assertion audience 'http://127.0.0.1:8200/v1/identity/oidc'.`
+    - This is probably because the server is hosted on `http://127.0.0.1:8200`, but once set up correctly, the audience is now wrong.
+    - Found it and fixed it.
+- Getting `No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'`.
+- Deleted Vault and started again.
+- Getting `No matching federated identity record found for presented assertion issuer 'http://10.1.8.46:8200/v1/platform-team/identity/oidc/plugins'`.
+    - No idea why this changed.
+    - `10.1.8.46` is the pod IP.
+- Feeling like my SSH hack will not help us, and this needs to be legitimate.
+
+## To Deploy
+For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
+
+For testing purposes:
+
+* Use [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) to set up an EC2 instance.
+* Set up an A record on my personal Route 53 `vault.the-tech-tutorial.com`.
+* Install Nginx and Certbot:
+```bash
+sudo apt update
+sudo apt install nginx certbot python3-certbot-nginx
+```
+* Copy [default-pre](./jumpbox/default-pre) to `/etc/nginx/sites-enabled/default`.
+* Use Certbot to obtain a Let’s Encrypt SSL certificate (change the domain):
+```bash
+sudo certbot --nginx -d vault.the-tech-tutorial.com
+```
+
+
+* Replace `vault.the-tech-tutorial.com` with the public DNS of the box (`line 3` and `line 25` in [default](./jumpbox/default)).
+* Also update the certificate file locations to whatever Certbot created.
+* Copy [default](./jumpbox/default) to the server `/etc/nginx/sites-enabled/default`.
+* Run:
+```bash
+ssh -R 0.0.0.0:8200:127.0.0.1:8200 ubuntu@34.198.16.120
+```
+  Opening a tunnel.
+* Hit `https://vault.the-tech-tutorial.com:8220/`.
+* Woop! Local Vault with Vault HTTPS. I, of course, do not recommend this insanity in production.
+
+If starting here, set the relevant environment variables:
+
+```bash
+export TF_VAR_vault_addr="http://127.0.0.1:8200"
+export TF_VAR_subscription_id=""
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+```
+
+1. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
+
+```bash
+cd 2-wif-initial-setup
+terraform init
+terraform apply
+```
+
+Now we need to configure Azure. A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers):
+
+2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
+
+3. Set the following values, replacing the URL with your Vault URL:
+
+| Field              | Value                                               |
+|--------------------|-----------------------------------------------------|
+| Issuer             | `https://{VAULT_URL}:8200/v1/platform-team/identity/oidc/plugins` |
+| Subject identifier | `plugin-identity:platform-team:secret:azure`         |
+| Name               | `Vault`                                             |
+
+4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
+
+```bash
+export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins"
+```
+
+For example:
+```bash
+export TF_VAR_identity_token_audience="vault-cluster-public-vault.z1.hashicorp.cloud:8200/v1/identity/oidc"
+```
+
+5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team).
+
+```bash
+cd ..
+cd 2-wif-credentials-platform-team
+terraform init
+terraform apply
+```
+
+## Choosing between dynamic or existing service principals
+Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
+
+Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
+
+An important limitation when using an existing service principal is that Azure limits the number of passwords for a single Application. This limit is based on Application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per Application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
+
+---
+
+Let me know if you'd like any additional adjustments!

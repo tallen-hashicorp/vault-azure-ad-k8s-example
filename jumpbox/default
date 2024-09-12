@@ -1,0 +1,31 @@
+server {
+    listen 8220 ssl;
+    server_name vault.the-tech-tutorial.com;
+
+    # SSL configuration using Let's Encrypt certificates
+    ssl_certificate /etc/letsencrypt/live/vault.the-tech-tutorial.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vault.the-tech-tutorial.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/vault.the-tech-tutorial.com/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    location / {
+        proxy_pass http://localhost:8200;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name vault.the-tech-tutorial.com;
+
+    # Redirect all HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host:8220$request_uri;
+    }
+}
