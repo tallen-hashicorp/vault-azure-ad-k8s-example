@@ -39,13 +39,3 @@ resource "vault_auth_backend" "jwt" {
   type                  = "jwt"
   description           = "JWT authentication for platform team"
 }
-
-resource "vault_identity_oidc" "server" {
-  
-}
-
-resource "vault_identity_oidc_client" "test" {
-  name          = "azure"
-  id_token_ttl     = 2400
-  access_token_ttl = 7200
-}

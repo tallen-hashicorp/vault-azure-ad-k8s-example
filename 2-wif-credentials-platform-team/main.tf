@@ -9,5 +9,5 @@ module "tier-1-azure-ad" {
   tenant_id                 = var.tenant_id
   client_id                 = var.client_id
   subscription_id           = var.subscription_id
-  identity_token_audience   = "${var.vault_addr}/v1/identity/oidc"
+  identity_token_audience   = var.identity_token_audience
 }

@@ -28,5 +28,8 @@ variable "subscription_id" {
 variable "vault_addr" {
   description = "The Vault Address"
   type        = string
-  sensitive   = true
+}
+
+variable "identity_token_audience" {
+  type        = string
 }
