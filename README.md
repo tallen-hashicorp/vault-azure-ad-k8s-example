@@ -204,20 +204,28 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - HCP Vault is 1.15 🤦‍♂️
 
 ## To Deploy
-For this we need Vault deployed using https and it needs to be network-reachable by Azure. For this I'm going to use a new instance and take advatage of [HCP Vault](https://developer.hashicorp.com/hcp/docs/vault/what-is-hcp-vault). 
+For this we need Vault deployed using https and it needs to be network-reachable by Azure.
 
-1. Go to [https://portal.cloud.hashicorp.com/](https://portal.cloud.hashicorp.com/) and setup a new Vault Dedicated server select **Start from scratch**
+For my testing magic:
 
-2. Copy the public URL and Root token and run the following to set the varaibles replacing `addr` and `token` with your values:
-
+* Use [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) to setup a ec2 instance
+* Setup a A record on my personal route 53 `vault.the-tech-tutorial.com`
+* Install Nginx and Certbot
 ```bash
-export VAULT_ADDR="addr"
-export VAULT_TOKEN="token"
-export TF_VAR_vault_token=$VAULT_TOKEN
-export TF_VAR_vault_addr=$VAULT_ADDR
+sudo apt update
+sudo apt install nginx certbot python3-certbot-nginx
 ```
+* copy [default-pre](./jumpbox/default-pre) to /etc/nginx/sites-enabled/default
+* Use certbot to obtain a Let’s Encrypt SSL certificate **change the domain** `sudo certbot --nginx -d vault.the-tech-tutorial.com`
+* Replace `vault.the-tech-tutorial.com` with the public dns of the box `line3` **&** `line25` in [default](./jumpbox/default)
+* Also update the cert file locations to whatever certbot made
+* Copy [default](./jumpbox/default) to the server `/etc/nginx/sites-enabled/default`
+* run `ssh -R 0.0.0.0:8200:127.0.0.1:8200 ubuntu@34.198.16.120` opening a tunnel
+* hit https://vault.the-tech-tutorial.com:8220/
+* Woop local vault with vault https, I of course do not recomend this insanity in production. 
 
-3. Now we can setup Vault, run the following the setup the inital namespace etc in Vault
+
+1. Now we can setup Vault, run the following the setup the inital namespace etc in Vault
 
 ```bash
 cd 2-wif-initial-setup
@@ -226,12 +234,11 @@ terraform apply
 ```
 
 
-
 Now we need to configure Azure, a more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers):
 
-4. Find your app registration you created ealier, probably called `Vault Platform Team` in the app registrations experience of the Microsoft Entra admin center. Select Certificates & secrets in the left nav pane, select the Federated credentials tab, and select Add credential.
+2. Find your app registration you created ealier, probably called `Vault Platform Team` in the app registrations experience of the Microsoft Entra admin center. Select Certificates & secrets in the left nav pane, select the Federated credentials tab, and select Add credential.
 
-5. Set the following values, replacing the URL with your vault URL
+3. Set the following values, replacing the URL with your vault URL
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
@@ -241,7 +248,7 @@ Now we need to configure Azure, a more detailed guide can be found for Vault [he
 
 ![alt text](docs/azure-screenshot1.png)
 
-6. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidc/plugins`**
+4. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidc/plugins`**
 
 ```bash
 export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc"
@@ -249,7 +256,7 @@ export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc"
 
 for example `export TF_VAR_identity_token_audience="vault-cluster-public-vault-.z1.hashicorp.cloud:8200/v1/identity/oidc"`
 
-7. Now we will setup the azure secrets engine in the platform team account, you probably have `TF_VAR_client_id`, `TF_VAR_tenant_id` & `TF_VAR_subscription_id` already set but if not go back to [here](#step-1-deploy-azure-secret-engine-for-platform-team)
+5. Now we will setup the azure secrets engine in the platform team account, you probably have `TF_VAR_client_id`, `TF_VAR_tenant_id` & `TF_VAR_subscription_id` already set but if not go back to [here](#step-1-deploy-azure-secret-engine-for-platform-team)
 
 ```bash
 cd ..
