@@ -203,18 +203,57 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 ## To Deploy
 For this we need Vault deployed using https and it needs to be network-reachable by Azure. For this I'm going to use a new instance and take advatage of [HCP Vault](https://developer.hashicorp.com/hcp/docs/vault/what-is-hcp-vault). 
 
-The following guide is taken from [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif)
+1. Go to [https://portal.cloud.hashicorp.com/](https://portal.cloud.hashicorp.com/) and setup a new Vault Dedicated server select **Start from scratch**
 
-1. Ensure that Vault [openid-configuration](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-identity-token-issuer-s-openid-configuration) and [public JWKS](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-identity-token-issuer-s-public-jwks) APIs are network-reachable by Azure. We recommend using an API proxy or gateway if you need to limit Vault API exposure.
+2. Copy the public URL and Root token and run the following to set the varaibles replacing `addr` and `token` with your values:
 
-2. Configure a [federated identity credential](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers) on a dedicated application registration in Azure to establish a trust relationship with Vault.
+```bash
+export VAULT_ADDR="addr"
+export VAULT_TOKEN="token"
+export TF_VAR_vault_token=$VAULT_TOKEN
+export TF_VAR_vault_addr=$VAULT_ADDR
+```
 
-    - The issuer URL must point at your [Vault plugin identity token issuer](https://developer.hashicorp.com/vault/api-docs/secret/identity/tokens#read-plugin-workload-identity-issuer-s-openid-configuration) with the /.well-known/openid-configuration suffix removed. For example: https://host:port/v1/identity/oidc/plugins.
+3. Now we can setup Vault, run the following the setup the inital namespace etc in Vault
 
-    - The subject identifier must match the unique sub claim issued by plugin identity tokens. The subject identifier should have the form plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>.
+```bash
+cd 2-wif-initial-setup
+terraform init
+terraform apply
+```
 
-    - The audience should be under 600 characters. The default value in Azure is api://AzureADTokenExchange.
 
+
+Now we need to configure Azure, a more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers):
+
+4. Find your app registration you created ealier, probably called `Vault Platform Team` in the app registrations experience of the Microsoft Entra admin center. Select Certificates & secrets in the left nav pane, select the Federated credentials tab, and select Add credential.
+
+5. Set the following values, replacing the URL with your vault URL
+
+| Field              | Value                                               |
+|--------------------|-----------------------------------------------------|
+| Issuer             | `https://{VAULT_URL}:8200/v1/identity/oidc/plugins` |
+| Subject identifier | `platform-team:secret:azure`                        |
+| Name               | `Vault`                                             |
+
+![alt text](docs/azure-screenshot1.png)
+
+6. Next we need to configure the `identity_token_audience` variable we will use in the next step, to do that replace `{VAULT_HOST}` in the following command. **This does not need http:// so will be something like `vault.example/v1/identity/oidc/plugins`**
+
+```bash
+export TF_VAR_identity_token_audience="{VAULT_HOST}/v1/identity/oidc/plugins"
+```
+
+for example `export TF_VAR_identity_token_audience="vault-cluster-public-vault-.z1.hashicorp.cloud:8200/v1/identity/oidc/plugins"`
+
+7. Now we will setup the azure secrets engine in the platform team account, you probably have `TF_VAR_client_id`, `TF_VAR_tenant_id` & `TF_VAR_subscription_id` already set but if not go back to [here](#step-1-deploy-azure-secret-engine-for-platform-team)
+
+```bash
+cd ..
+cd 2-wif-credentials-platform-team
+terraform init
+terraform apply
+```
 
 
 
