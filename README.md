@@ -1,7 +1,3 @@
-Here is the spell-checked version of the document:
-
----
-
 # Vault Azure AD Kubernetes Example
 
 This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. We will walk through the setup of Vault, dynamic credential generation using Azure AD, and the use of Terraform modules to manage these configurations.
@@ -300,7 +296,3 @@ Dynamic service principals are preferred if the desired Azure resources can be p
 Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
 
 An important limitation when using an existing service principal is that Azure limits the number of passwords for a single Application. This limit is based on Application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per Application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
-
----
-
-Let me know if you'd like any additional adjustments!
