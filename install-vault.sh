@@ -42,7 +42,7 @@ printf "\033[1;32mRoot Token: %s\033[0m\n" "$VAULT_TOKEN"
 
 
 # Step 6: Enable vault audit log
-vault audit enable file file_path=/tmp/vault-audit-log.txt
+vault audit enable file file_path="/tmp/vault-audit-log.txt"
 
 # Export the root token to use in subsequent TF steps
 unset TF_VAR_vault_token

@@ -204,6 +204,8 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - `vault_identity_oidc` gets created every time!
 - No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
     - This looks correct however I feel this is a MSFS cache issue, wait to 12:00 to test again
+- If get `No matching federated identity record found for presented assertion issuer` then the `vault_identity_oidc` in `modules/2-vault-azure-secrets-engine/main.tf` us incorrect
+
 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
@@ -286,20 +288,22 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL:
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. The Audience must be the same as step 4 below
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
 | Issuer             | `https://{VAULT_URL}:8200/v1/platform-team/identity/oidc/plugins` |
-| Subject identifier | `plugin-identity:platform-team:secret:azure`         |
+| Subject identifier | `plugin-identity:0AUpw:secret:azure_38b36e27`         |
 | Name               | `Vault`                                             |
+| Audience           |  `vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins` |
+
 
 ![azure](./docs/azure-screenshot1.png)
 
 4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
 
 ```bash
-export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
+export TF_VAR_identity_token_audience="vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
 ```
 
 5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
@@ -309,6 +313,15 @@ cd ..
 cd 2-wif-credentials-platform-team
 terraform init
 terraform apply
+```
+
+6. You can test this with
+```bash
+export VAULT_NAMESPACE="platform-team"
+vault read azure/config
+vault list azure/roles
+vault read azure/creds/platform-team
+unset VAULT_NAMESPACE
 ```
 
 **NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration).
