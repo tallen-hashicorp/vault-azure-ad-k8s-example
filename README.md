@@ -197,7 +197,8 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
     - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
     - Short-lived credentials enhance security but are more complex to integrate and manage frequent credential rotations effectively.
 - Ensure `api_addr` is set to external API URL.
-- Needs to take advantage of `group_policy_application_mode` : [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing)
+- Would not be able to have an azure mount in the tenats that use the `client_id` & `client_secret` generated from the `platform-team` mount as they are so short lived. You can however setup azure mounts in each tenant with the same config as platform-team
+    - An altaneraitce would be to take advantage of `group_policy_application_mode` : [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing)
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
