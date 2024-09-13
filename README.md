@@ -243,7 +243,7 @@ sudo mv vault /usr/bin
 
 * Copy the license file over to `/tmp/vault.hclic`.
 
-* Copy the [vault.hclic](./jumpbox/vault.hcl) to the EC2 instance. **Ensure you update the cert file locations to match yours**.
+* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance. **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
 
 * Start Vault:
 
