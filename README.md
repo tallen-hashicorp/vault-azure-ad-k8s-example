@@ -195,7 +195,8 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - Requires Vault 1.17 or later.
 - Added complexity:
     - `identity/oidc` needs to be configured and enabled.
-    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
+    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure
+    - Short-lived credentials, enhances security, however are more complex to intergrate and manage the frequent credential rotations effectively.
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
@@ -213,34 +214,9 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
 
-For testing purposes:
+One approach for this was to use a proxy, this did not work in my testing and I've switched to deploying Vault on a ec2 node as descirpbed before, however my previous proxy notes can be found [here](./vault-proxy-notes.md)
 
-* Use [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) to set up an EC2 instance.
-* Set up an A record on my personal Route 53 `vault.the-tech-tutorial.com`.
-* Install Nginx and Certbot:
-```bash
-sudo apt update
-sudo apt install nginx certbot python3-certbot-nginx
-```
-* Copy [default-pre](./jumpbox/default-pre) to `/etc/nginx/sites-enabled/default`.
-* Use Certbot to obtain a Let’s Encrypt SSL certificate (change the domain):
-```bash
-sudo certbot --nginx -d vault.the-tech-tutorial.com
-```
-
-
-* Replace `vault.the-tech-tutorial.com` with the public DNS of the box (`line 3` and `line 25` in [default](./jumpbox/default)).
-* Also update the certificate file locations to whatever Certbot created.
-* Copy [default](./jumpbox/default) to the server `/etc/nginx/sites-enabled/default`.
-* Run:
-```bash
-ssh -R 0.0.0.0:8200:127.0.0.1:8200 ubuntu@34.198.16.120
-```
-  Opening a tunnel.
-* Hit `https://vault.the-tech-tutorial.com:8220/`.
-* Woop! Local Vault with Vault HTTPS. I, of course, do not recommend this insanity in production.
-
-If starting here, set the relevant environment variables:
+In order to have a Vault node that is avliable to HTTPS, and it must be network-reachable by Azure I am using a diffrent Vault install on EC2. 
 
 ```bash
 export TF_VAR_vault_addr="http://127.0.0.1:8200"
