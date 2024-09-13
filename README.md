@@ -119,12 +119,6 @@ This section covers dynamic credential generation using the parent namespace Azu
         - `Insufficient privileges to complete the operation.` Seen this when Azure has not yet persisted the App registrations.
         - `The identity of the calling application could not be established.` Seen when the App registration is deleted.
         - `Application not found in the directory.` Seen this later after App registration is deleted.
-    4. Testing:
-        - 9:40 PM created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manually.
-        - 9:51 PM ran `terraform apply` on `1-dynamic-credentials-tenant1` to make tenant using that client_id.
-        - 9:53 PM tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tomorrow.
-        - Still running into `was not found in the directory 'Default Directory'`. I feel like this is a permission issue as I'm trying to grant owner, but not sure at this stage.
-        - Believe this is now fixed
 
 ## To Deploy
 
@@ -201,16 +195,9 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
-- Getting `No matching federated identity record found for presented assertion issuer 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'` error.
-- Getting `No matching federated identity record found for presented assertion audience 'http://127.0.0.1:8200/v1/identity/oidc'.`
-    - This is probably because the server is hosted on `http://127.0.0.1:8200`, but once set up correctly, the audience is now wrong.
-    - Found it and fixed it.
-- Getting `No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'`.
-- Deleted Vault and started again.
-- Getting `No matching federated identity record found for presented assertion issuer 'http://10.1.8.46:8200/v1/platform-team/identity/oidc/plugins'`.
-    - No idea why this changed.
-    - `10.1.8.46` is the pod IP.
-- Feeling like my SSH hack will not help us, and this needs to be legitimate.
+- Getting this error `{"error":"invalid_client","error_description":"AADSTS700212: No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'. Please note that the matching is done using a case-sensitive comparison. Please check your federated identity credential Subject, Audience and Issuer against the presented assertion. https://learn.microsoft.com/entra/workload-id/workload-identity-federation Trace ID: 7335979c-725f-4681-a0c8-09c3a057d500 Correlation ID: 0d885d3c-645b-4da0-981d-a1966305a811 Timestamp: 2024-09-13 09:58:40Z","error_codes":[700212],"timestamp":"2024-09-13 09:58:40Z","trace_id":"7335979c-725f-4681-a0c8-09c3a057d500","correlation_id":"0d885d3c-645b-4da0-981d-a1966305a811"}` 
+- No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
+    - This looks correct however I feel this is a MSFS cache issue
 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
