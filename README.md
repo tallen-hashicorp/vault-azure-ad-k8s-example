@@ -197,16 +197,15 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
     - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
     - Short-lived credentials enhance security but are more complex to integrate and manage frequent credential rotations effectively.
 - Ensure `api_addr` is set to external API URL.
-- Would not be able to have an azure mount in the tenats that use the `client_id` & `client_secret` generated from the `platform-team` mount as they are so short lived. You can however setup azure mounts in each tenant with the same config as platform-team
-    - An altaneraitce would be to take advantage of `group_policy_application_mode` : [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing)
+- Would not be able to have an Azure mount in the tenants that use the `client_id` & `client_secret` generated from the `platform-team` mount as they are so short-lived. You can, however, set up Azure mounts in each tenant with the same config as the platform team.
+    - An alternative would be to take advantage of `group_policy_application_mode`: [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing).
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
 - `vault_identity_oidc` gets created every time!
 - No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
-    - This looks correct however I feel this is a MSFS cache issue, wait to 12:00 to test again
-- If get `No matching federated identity record found for presented assertion issuer` then the `vault_identity_oidc` in `modules/2-vault-azure-secrets-engine/main.tf` us incorrect
-
+    - This looks correct; however, I feel this is an MSFS cache issue, waiting until 12:00 to test again.
+- If you get `No matching federated identity record found for presented assertion issuer`, then the `vault_identity_oidc` in `modules/2-vault-azure-secrets-engine/main.tf` is incorrect.
 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
@@ -215,9 +214,7 @@ One approach for this was to use a proxy; this did not work in my testing, and I
 
 In order to have a Vault node that is available to HTTPS, and it must be network-reachable by Azure, I am using a different Vault install on EC2.
 
-* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp
-
-/quick-ec2-tf) repository to provision an EC2 instance.
+* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
 
 * Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
 
@@ -237,7 +234,9 @@ sudo certbot --nginx -d vault.the-tech-tutorial.com
 * Install Vault:
 
 ```bash
-wget https://releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
+wget https://
+
+releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
 unzip vault_1.17.5+ent_linux_amd64.zip
 sudo mv vault /usr/bin
 ```
@@ -289,7 +288,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. The Audience must be the same as step 4 below
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. The Audience must be the same as step 4 below.
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
