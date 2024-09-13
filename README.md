@@ -300,7 +300,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
 ```
 
-5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team).
+5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
 
 ```bash
 cd ..
@@ -308,6 +308,8 @@ cd 2-wif-credentials-platform-team
 terraform init
 terraform apply
 ```
+
+**NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration)
 
 ## Choosing between dynamic or existing service principals
 Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
