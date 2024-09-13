@@ -100,8 +100,9 @@ terraform apply
 This creates the platform team namespace and additional components in Vault.
 
 # 1. Dynamic Credentials
-
 This section covers dynamic credential generation using the parent namespace Azure Secret Engine to configure the Tenant Azure Secret Engine.
+
+![diagram](./docs/1-dynamic-creds2.png)
 
 ### Pros
 - Easy to set up using Terraform.
@@ -176,11 +177,15 @@ vault read azure/creds/tenant1
 unset VAULT_NAMESPACE
 ```
 
+![diagram](./docs/1-dynamic-creds1.png)
+
 ---
 
 # 2. Plugin Workload Identity Federation (WIF)
 
 In this section, we will integrate Workload Identity Federation (WIF) to enable secure, token-based authentication between HashiCorp Vault and Azure AD. WIF allows workloads running in Kubernetes or other environments to authenticate with Azure AD without needing long-lived credentials. By using short-lived tokens, this approach enhances security and scalability when accessing Azure resources. We will configure the necessary Vault plugins and demonstrate how Terraform can manage WIF setup, ensuring that your platform and tenant teams can securely access Azure resources without manual credential handling.
+
+![wip](./docs/2-wip-creds1.png)
 
 ### Pros
 - Short-lived credentials, enhancing security.
@@ -192,12 +197,13 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
     - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
     - Short-lived credentials enhance security but are more complex to integrate and manage frequent credential rotations effectively.
 - Ensure `api_addr` is set to external API URL.
+- Needs to take advantage of `group_policy_application_mode` : [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing)
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
 - `vault_identity_oidc` gets created every time!
 - No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
-    - This looks correct however I feel this is a MSFS cache issue
+    - This looks correct however I feel this is a MSFS cache issue, wait to 12:00 to test again
 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
