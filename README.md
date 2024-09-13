@@ -294,6 +294,8 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 | Subject identifier | `plugin-identity:platform-team:secret:azure`         |
 | Name               | `Vault`                                             |
 
+![azure](./docs/azure-screenshot1.png)
+
 4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
 
 ```bash
