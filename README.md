@@ -197,6 +197,7 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
     - `identity/oidc` needs to be configured and enabled.
     - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure
     - Short-lived credentials, enhances security, however are more complex to intergrate and manage the frequent credential rotations effectively.
+- Ensure `api_addr` is set to external API URL
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
@@ -218,12 +219,59 @@ One approach for this was to use a proxy, this did not work in my testing and I'
 
 In order to have a Vault node that is avliable to HTTPS, and it must be network-reachable by Azure I am using a diffrent Vault install on EC2. 
 
+* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
+
+* Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
+
+* Update the system and install Nginx and Certbot for SSL management:
 ```bash
-export TF_VAR_vault_addr="http://127.0.0.1:8200"
+sudo apt update
+sudo apt install nginx certbot python3-certbot-nginx unzip
+```
+* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain, **Replace domain with yours**:
+```bash
+sudo certbot --nginx -d vault.the-tech-tutorial.com
+```
+
+* Install Vault
+```bash
+wget https://releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
+unzip vault_1.17.5+ent_linux_amd64.zip
+sudo mv vault /usr/bin
+```
+
+* Copy licence file over to `/tmp/vault.hclic`
+
+* Copy the [vault.hclic](./jumpbox/vault.hcl) to the ec2 instance, **ensure you update the cert file locations to match yours**
+
+* Start Vault
+```bash
+mkdir -p ./vault/data
+sudo vault server -config=vault.hcl
+```
+
+* Configure Vault **From your Laptop**, **Amend to match your url**
+```bash
+unset VAULT_TOKEN
+export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200/"
+vault operator init
+
+vault operator unseal
+vault operator unseal
+vault operator unseal
+
+export VAULT_TOKEN=hvs.******
+```
+
+Next lets configure Vault:
+
+
+```bash
+export TF_VAR_vault_addr=$VAULT_ADDR
+export TF_VAR_vault_token=$VAULT_TOKEN
 export TF_VAR_subscription_id=""
 export TF_VAR_tenant_id=""
 export TF_VAR_client_id=""
-export TF_VAR_client_secret=""
 ```
 
 1. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
@@ -249,12 +297,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
 
 ```bash
-export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins"
-```
-
-For example:
-```bash
-export TF_VAR_identity_token_audience="vault-cluster-public-vault.z1.hashicorp.cloud:8200/v1/identity/oidc"
+export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
 ```
 
 5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team).
