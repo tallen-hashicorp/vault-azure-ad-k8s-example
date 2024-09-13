@@ -124,7 +124,7 @@ This section covers dynamic credential generation using the parent namespace Azu
         - 9:51 PM ran `terraform apply` on `1-dynamic-credentials-tenant1` to make tenant using that client_id.
         - 9:53 PM tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tomorrow.
         - Still running into `was not found in the directory 'Default Directory'`. I feel like this is a permission issue as I'm trying to grant owner, but not sure at this stage.
-        - Belive this is now fixed
+        - Believe this is now fixed
 
 ## To Deploy
 
@@ -195,9 +195,9 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - Requires Vault 1.17 or later.
 - Added complexity:
     - `identity/oidc` needs to be configured and enabled.
-    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure
-    - Short-lived credentials, enhances security, however are more complex to intergrate and manage the frequent credential rotations effectively.
-- Ensure `api_addr` is set to external API URL
+    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
+    - Short-lived credentials enhance security but are more complex to integrate and manage frequent credential rotations effectively.
+- Ensure `api_addr` is set to external API URL.
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
@@ -215,42 +215,50 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
 
-One approach for this was to use a proxy, this did not work in my testing and I've switched to deploying Vault on a ec2 node as descirpbed before, however my previous proxy notes can be found [here](./vault-proxy-notes.md)
+One approach for this was to use a proxy; this did not work in my testing, and I've switched to deploying Vault on an EC2 node as described before. However, my previous proxy notes can be found [here](./vault-proxy-notes.md).
 
-In order to have a Vault node that is avliable to HTTPS, and it must be network-reachable by Azure I am using a diffrent Vault install on EC2. 
+In order to have a Vault node that is available to HTTPS, and it must be network-reachable by Azure, I am using a different Vault install on EC2.
 
-* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
+* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp
+
+/quick-ec2-tf) repository to provision an EC2 instance.
 
 * Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
 
 * Update the system and install Nginx and Certbot for SSL management:
+
 ```bash
 sudo apt update
 sudo apt install nginx certbot python3-certbot-nginx unzip
 ```
-* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain, **Replace domain with yours**:
+
+* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
+
 ```bash
 sudo certbot --nginx -d vault.the-tech-tutorial.com
 ```
 
-* Install Vault
+* Install Vault:
+
 ```bash
 wget https://releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
 unzip vault_1.17.5+ent_linux_amd64.zip
 sudo mv vault /usr/bin
 ```
 
-* Copy licence file over to `/tmp/vault.hclic`
+* Copy the license file over to `/tmp/vault.hclic`.
 
-* Copy the [vault.hclic](./jumpbox/vault.hcl) to the ec2 instance, **ensure you update the cert file locations to match yours**
+* Copy the [vault.hclic](./jumpbox/vault.hcl) to the EC2 instance. **Ensure you update the cert file locations to match yours**.
 
-* Start Vault
+* Start Vault:
+
 ```bash
 mkdir -p ./vault/data
 sudo vault server -config=vault.hcl
 ```
 
-* Configure Vault **From your Laptop**, **Amend to match your url**
+* Configure Vault **from your Laptop**. **Amend to match your URL**:
+
 ```bash
 unset VAULT_TOKEN
 export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200/"
@@ -263,8 +271,7 @@ vault operator unseal
 export VAULT_TOKEN=hvs.******
 ```
 
-Next lets configure Vault:
-
+Next, let's configure Vault:
 
 ```bash
 export TF_VAR_vault_addr=$VAULT_ADDR
@@ -282,7 +289,7 @@ terraform init
 terraform apply
 ```
 
-Now we need to configure Azure. A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers):
+Now we need to configure Azure. A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers).
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
@@ -309,11 +316,11 @@ terraform init
 terraform apply
 ```
 
-**NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration)
+**NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration).
 
 ## Choosing between dynamic or existing service principals
 Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
 
 Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
 
-An important limitation when using an existing service principal is that Azure limits the number of passwords for a single Application. This limit is based on Application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per Application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
+An important limitation when using an existing service principal is that Azure limits the number of passwords for a single application. This limit is based on application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
