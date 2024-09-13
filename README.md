@@ -195,7 +195,7 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
-- Getting this error `{"error":"invalid_client","error_description":"AADSTS700212: No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'. Please note that the matching is done using a case-sensitive comparison. Please check your federated identity credential Subject, Audience and Issuer against the presented assertion. https://learn.microsoft.com/entra/workload-id/workload-identity-federation Trace ID: 7335979c-725f-4681-a0c8-09c3a057d500 Correlation ID: 0d885d3c-645b-4da0-981d-a1966305a811 Timestamp: 2024-09-13 09:58:40Z","error_codes":[700212],"timestamp":"2024-09-13 09:58:40Z","trace_id":"7335979c-725f-4681-a0c8-09c3a057d500","correlation_id":"0d885d3c-645b-4da0-981d-a1966305a811"}` 
+- `vault_identity_oidc` gets created every time!
 - No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
     - This looks correct however I feel this is a MSFS cache issue
 
@@ -248,7 +248,7 @@ sudo vault server -config=vault.hcl
 
 ```bash
 unset VAULT_TOKEN
-export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200/"
+export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200"
 vault operator init
 
 vault operator unseal

@@ -14,7 +14,7 @@ resource "vault_azure_secret_backend" "azure" {
 }
 
 resource "vault_identity_oidc" "server" {
-  issuer = var.identity_token_audience
+  issuer = var.vault_address
 }
 
 resource "vault_identity_oidc_client" "test" {
