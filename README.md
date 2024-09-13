@@ -1,7 +1,3 @@
-Got it! I’ll keep all the steps intact while still improving the clarity and flow. Here’s the updated version with everything retained:
-
----
-
 # Vault Azure AD Kubernetes Example
 
 This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. We will walk through the setup of Vault, dynamic credential generation using Azure AD, and the use of Terraform modules to manage these configurations.
@@ -21,7 +17,7 @@ We will use a local Kubernetes cluster with Vault Enterprise deployed via Helm.
 
 ### Step 1: Prepare the Vault License
 
-Before deploying Vault, create a Kubernetes secret containing your Vault Enterprise license. Replace `vault.hclic` with the actual path to your license file.
+Before deploying Vault, you need to create a Kubernetes secret containing your Vault Enterprise license. Replace `vault.hclic` with the actual path to your license file.
 
 Alternatively, you can copy the `vault.hclic` file into this directory (the `.gitignore` file already prevents this from being committed).
 
@@ -73,7 +69,7 @@ kubectl delete ns vault
 
 ---
 
-## 0. Basic Setup
+# 0. Basic Setup
 
 The initial setup creates foundational components for the Vault platform team. Aside from the namespace creation, the rest of the setup is an example of how modules can be structured. We use Vault's root token for simplicity in this example.
 
@@ -103,9 +99,7 @@ terraform apply
 
 This creates the platform team namespace and additional components in Vault.
 
----
-
-## 1. Dynamic Credentials
+# 1. Dynamic Credentials
 
 This section covers dynamic credential generation using the parent namespace Azure Secret Engine to configure the Tenant Azure Secret Engine.
 
@@ -115,24 +109,24 @@ This section covers dynamic credential generation using the parent namespace Azu
 ### Cons
 - Terraform must be rerun every 30 days to refresh credentials.
 - Long-lived credentials need rotation.
-- Can't run this all at once. It can take up to an hour for the credentials to work when rotated!
+- Can't run this all at once. The problem I found is that it takes up to an hour for the credentials to work when rotated!
 
 ### Notes
 - If the platform team root is rotated, the tenant stops working. To fix this:
     1. Run `terraform apply` on `1-dynamic-credentials-tenant1`.
     2. Wait 1 minute to 3 hours for Azure to persist the new service principal (this delay is an Azure issue, not Vault).
     3. Possible errors include:
-        - `Insufficient privileges to complete the operation.` (Seen when Azure hasn't yet persisted the App registrations.)
-        - `The identity of the calling application could not be established.` (Seen when the App registration is deleted.)
-        - `Application not found in the directory.` (Seen later after App registration is deleted.)
-    4. Testing example:
-        - 9:40 PM: Created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manually.
-        - 9:51 PM: Ran `terraform apply` on `1-dynamic-credentials-tenant1` to make tenant using that client_id.
-        - 9:53 PM: Tested `vault read azure/creds/tenant1` and got `The identity of the calling application could not be established.`, will test tomorrow.
-        - Still running into `was not found in the directory 'Default Directory'`. This may be a permission issue when trying to grant owner access.
-        - Believed to be fixed now.
+        - `Insufficient privileges to complete the operation.` Seen this when Azure has not yet persisted the App registrations.
+        - `The identity of the calling application could not be established.` Seen when the App registration is deleted.
+        - `Application not found in the directory.` Seen this later after App registration is deleted.
+    4. Testing:
+        - 9:40 PM created client_id `cbc17df7-7c4f-47e9-abcc-5525f5252eab` manually.
+        - 9:51 PM ran `terraform apply` on `1-dynamic-credentials-tenant1` to make tenant using that client_id.
+        - 9:53 PM tested `vault read azure/creds/tenant1` got `The identity of the calling application could not be established.`, will test tomorrow.
+        - Still running into `was not found in the directory 'Default Directory'`. I feel like this is a permission issue as I'm trying to grant owner, but not sure at this stage.
+        - Belive this is now fixed
 
-### To Deploy
+## To Deploy
 
 Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by following the steps in the [Azure Credentials Setup Guide](./azure-credentials-setup.md).
 
@@ -190,9 +184,9 @@ unset VAULT_NAMESPACE
 
 ---
 
-## 2. Plugin Workload Identity Federation (WIF)
+# 2. Plugin Workload Identity Federation (WIF)
 
-In this section, we will integrate Workload Identity Federation (WIF) to enable secure, token-based authentication between HashiCorp Vault and Azure AD. WIF allows workloads running in Kubernetes or other environments to authenticate with Azure AD without needing long-lived credentials. By using short-lived tokens, this approach enhances security and scalability when accessing Azure resources.
+In this section, we will integrate Workload Identity Federation (WIF) to enable secure, token-based authentication between HashiCorp Vault and Azure AD. WIF allows workloads running in Kubernetes or other environments to authenticate with Azure AD without needing long-lived credentials. By using short-lived tokens, this approach enhances security and scalability when accessing Azure resources. We will configure the necessary Vault plugins and demonstrate how Terraform can manage WIF setup, ensuring that your platform and tenant teams can securely access Azure resources without manual credential handling.
 
 ### Pros
 - Short-lived credentials, enhancing security.
@@ -201,59 +195,76 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - Requires Vault 1.17 or later.
 - Added complexity:
     - `identity/oidc` needs to be configured and enabled.
-    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
-    - Short-lived credentials are more secure but require more frequent rotations and integration complexity.
-- Ensure `api_addr` is set to the external API URL.
+    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure
+    - Short-lived credentials, enhances security, however are more complex to intergrate and manage the frequent credential rotations effectively.
+- Ensure `api_addr` is set to external API URL
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
+- Getting `No matching federated identity record found for presented assertion issuer 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'` error.
+- Getting `No matching federated identity record found for presented assertion audience 'http://127.0.0.1:8200/v1/identity/oidc'.`
+    - This is probably because the server is hosted on `http://127.0.0.1:8200`, but once set up correctly, the audience is now wrong.
+    - Found it and fixed it.
+- Getting `No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8220/v1/platform-team/identity/oidc/plugins'`.
+- Deleted Vault and started again.
+- Getting `No matching federated identity record found for presented assertion issuer 'http://10.1.8.46:8200/v1/platform-team/identity/oidc/plugins'`.
+    - No idea why this changed.
+    - `10.1.8.46` is the pod IP.
+- Feeling like my SSH hack will not help us, and this needs to be legitimate.
 
-### To Deploy
+## To Deploy
+For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
 
-For WIF, Vault must be deployed using HTTPS and be network-reachable by Azure. Here's how to set it up on EC2:
+One approach for this was to use a proxy, this did not work in my testing and I've switched to deploying Vault on a ec2 node as descirpbed before, however my previous proxy notes can be found [here](./vault-proxy-notes.md)
 
-1. Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
-2. Set up an A record on Route 53, e.g., `vault.the-tech-tutorial.com`.
-3. Install Nginx and Certbot for SSL:
+In order to have a Vault node that is avliable to HTTPS, and it must be network-reachable by Azure I am using a diffrent Vault install on EC2. 
 
+* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
+
+* Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
+
+* Update the system and install Nginx and Certbot for SSL management:
 ```bash
 sudo apt update
 sudo apt install nginx certbot python3-certbot-nginx unzip
 ```
-
-4. Obtain a Let's Encrypt certificate:
-
+* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain, **Replace domain with yours**:
 ```bash
 sudo certbot --nginx -d vault.the-tech-tutorial.com
 ```
 
-5. Install Vault:
-
+* Install Vault
 ```bash
 wget https://releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
 unzip vault_1.17.5+ent_linux_amd64.zip
 sudo mv vault /usr/bin
 ```
 
-6. Start Vault:
+* Copy licence file over to `/tmp/vault.hclic`
 
+* Copy the [vault.hclic](./jumpbox/vault.hcl) to the ec2 instance, **ensure you update the cert file locations to match yours**
+
+* Start Vault
 ```bash
 mkdir -p ./vault/data
 sudo vault server -config=vault.hcl
 ```
 
-7. Configure Vault:
-
+* Configure Vault **From your Laptop**, **Amend to match your url**
 ```bash
+unset VAULT_TOKEN
 export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200/"
 vault operator init
+
 vault operator unseal
 vault operator unseal
 vault operator unseal
+
 export VAULT_TOKEN=hvs.******
 ```
 
-Set the necessary variables and deploy the WIF setup using Terraform:
+Next lets configure Vault:
+
 
 ```bash
 export TF_VAR_vault_addr=$VAULT_ADDR
@@ -263,7 +274,7 @@ export TF_VAR_tenant_id=""
 export TF_VAR_client_id=""
 ```
 
-Now, navigate to the directory and apply:
+1. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
 
 ```bash
 cd 2-wif-initial-setup
@@ -271,14 +282,36 @@ terraform init
 terraform apply
 ```
 
-Follow the Azure and Vault documentation for more details on setting up WIF.
+Now we need to configure Azure. A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers):
 
----
+2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-## Choosing Between Dynamic or Existing Service Principals
+3. Set the following values, replacing the URL with your Vault URL:
 
-Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system. This approach is decoupled from other clients and offers the best audit granularity.
+| Field              | Value                                               |
+|--------------------|-----------------------------------------------------|
+| Issuer             | `https://{VAULT_URL}:8200/v1/platform-team/identity/oidc/plugins` |
+| Subject identifier | `plugin-identity:platform-team:secret:azure`         |
+| Name               | `Vault`                                             |
 
-However, some Azure services cannot use the RBAC system. In these cases, an existing service principal may be needed, but be mindful of Azure’s limit on the number of passwords for a single Application.
+4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
 
----
+```bash
+export TF_VAR_identity_token_audience="https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
+```
+
+5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team).
+
+```bash
+cd ..
+cd 2-wif-credentials-platform-team
+terraform init
+terraform apply
+```
+
+## Choosing between dynamic or existing service principals
+Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
+
+Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
+
+An important limitation when using an existing service principal is that Azure limits the number of passwords for a single Application. This limit is based on Application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per Application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
