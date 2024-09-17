@@ -214,18 +214,17 @@ One approach for this was to use a proxy; this did not work in my testing, and I
 
 In order to have a Vault node that is available to HTTPS, and it must be network-reachable by Azure, I am using a different Vault install on EC2.
 
-* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
+* Use the [tf-ec2-vault](./tf-ec2-vault/) repository to provision an EC2 instance.
+
+```bash
+cd tf-ec2-vault
+terraform init
+terraform apply
+```
 
 * Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
 
-* Update the system and install Nginx and Certbot for SSL management:
-
-```bash
-sudo apt update
-sudo apt install nginx certbot python3-certbot-nginx unzip
-```
-
-* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
+* SSH into Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
 
 ```bash
 sudo certbot --nginx -d vault.the-tech-tutorial.com
