@@ -43,6 +43,7 @@ output "azure_mount_path" {
   value = module.tier-1-azure-ad.azure_mount_path
 }
 
+# Example: plugin-identity:jHmOm:secret:azure_38b36e27
 output "azure_subject_identifier" {
-  value = module.tier-1-azure-ad.azure_subject_identifier
+  value = "plugin-identity:${module.vault-namespace.namespace_int_id}:secret:${module.tier-1-azure-ad.azure_mount_id}"
 }

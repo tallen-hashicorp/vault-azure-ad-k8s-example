@@ -297,7 +297,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 ```bash
 cd ..
-cd 2-wif-credentials-platform-team
+cd 2-wif-role-tenant
 terraform init
 terraform apply
 ```
