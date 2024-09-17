@@ -11,6 +11,39 @@ Before proceeding, ensure you have the following:
 - An Azure account with necessary permissions
 - A Vault Enterprise license
 
+# Setting Up Azure Credentials
+
+We'll use an Azure Application's `client_id` and `client_secret` for the basis of all the following configurations. This guide will show you how to use Terraform (TF) to set this up.
+
+## Authenticate to Azure
+
+Before running the Terraform configuration, we need to authenticate to Azure. Follow these steps:
+
+1. Log in to Azure:
+
+    ```bash
+    az login
+    ```
+
+2. Once logged in, set your subscription ID:
+
+    ```bash 
+    export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
+    ```
+
+## Running Terraform
+
+Now, navigate to the setup directory and run the following commands to initialize and apply the Terraform configuration:
+
+```bash
+cd 0-azure-setup
+terraform init
+terraform apply
+cd ..
+```
+
+---
+
 ## Starting Vault
 
 We will use a local Kubernetes cluster with Vault Enterprise deployed via Helm.

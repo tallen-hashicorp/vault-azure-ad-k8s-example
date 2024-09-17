@@ -8,5 +8,5 @@ module "tier-1-azure-ad" {
 
   azure_mount_path  = "azure"
 
-  azure_scope       = "/subscriptions/${var.subscription_id}/resourceGroups/azure-vault-group"
+  azure_scope       = "/subscriptions/${var.subscription_id}/resourceGroups/vault-platform-team-rg-1"
 }
