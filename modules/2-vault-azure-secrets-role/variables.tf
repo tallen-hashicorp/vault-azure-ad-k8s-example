@@ -14,25 +14,12 @@ variable "vault_namespace" {
   type        = string
 }
 
-
-variable "azure_secrets_path" {
-  description = "Path where Azure Secrets Engine is enabled (default is 'azure/')"
-  type        = string
-  default     = "azure"
-}
-
-variable "tenant_id" {
-  description = "Azure Tenant ID"
+variable "azure_scope" {
   type        = string
 }
 
-variable "client_id" {
-  description = "Azure Client ID"
-  type        = string
-}
-
-variable "subscription_id" {
-  description = "Azure Subscription ID"
+variable "azure_mount_path" {
+  description = "value of vault_azure_secret_backend.azure.path"
   type        = string
 }
 

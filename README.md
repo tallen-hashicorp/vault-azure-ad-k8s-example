@@ -214,36 +214,29 @@ One approach for this was to use a proxy; this did not work in my testing, and I
 
 In order to have a Vault node that is available to HTTPS, and it must be network-reachable by Azure, I am using a different Vault install on EC2.
 
-* Use the [quick-ec2-tf](https://github.com/tallen-hashicorp/quick-ec2-tf) repository to provision an EC2 instance.
-
-* Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
-
-* Update the system and install Nginx and Certbot for SSL management:
+* Use the [tf-ec2-vault](./tf-ec2-vault/) repository to provision an EC2 instance.
 
 ```bash
-sudo apt update
-sudo apt install nginx certbot python3-certbot-nginx unzip
+cd tf-ec2-vault
+terraform init
+terraform apply
+cd ..
 ```
 
-* Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
+* Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
+    * If you forget the IP of the EC2 box run the following `terraform output public_ip`
+
+* SSH `ssh ubuntu@vault.the-tech-tutorial.com`into Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
 
 ```bash
 sudo certbot --nginx -d vault.the-tech-tutorial.com
 ```
 
-* Install Vault:
+* Vault should allready be instealled for you
 
-```bash
-wget https://
+* Copy the license file over to `/tmp/vault.hclic` (eg. `scp vault.hclic ubuntu@vault.the-tech-tutorial.com:`).
 
-releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
-unzip vault_1.17.5+ent_linux_amd64.zip
-sudo mv vault /usr/bin
-```
-
-* Copy the license file over to `/tmp/vault.hclic`.
-
-* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance. **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
+* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance (eg. `scp jumpbox/vault.hcl ubuntu@vault.the-tech-tutorial.com:`). **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
 
 * Start Vault:
 
@@ -288,7 +281,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. The Audience must be the same as step 4 below.
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: You can use the azure_subject_identifier outputed from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
@@ -300,29 +293,40 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 ![azure](./docs/azure-screenshot1.png)
 
-4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
-
-```bash
-export TF_VAR_identity_token_audience="vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
-```
-
-5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
+4. Now we will set up the Azure Secrets Engine Role in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
 
 ```bash
 cd ..
-cd 2-wif-credentials-platform-team
+cd 2-wif-role-tenant1
 terraform init
 terraform apply
 ```
+
+5. You can also repeat this for `2-wif-role-tenant1`
 
 6. You can test this with
 ```bash
 export VAULT_NAMESPACE="platform-team"
 vault read azure/config
 vault list azure/roles
-vault read azure/creds/platform-team
+vault read azure/creds/tenant1
+vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
+
+7. Lets also test this in Azure to see the scope replacing `<CLIENT_ID>` & `<CLIENT_SECRET>`, `TF_VAR_tenant_id` should already be set
+```bash
+az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
+az group list --output table
+```
+
+In my testing I had the groups azure-vault-group & testing-23, here is the result confirming the scope does work
+
+| Name     | Assigned Scope                                                           | Groups Visible                    |
+|----------|--------------------------------------------------------------------------|-----------------------------------|
+| tenant1  | `/subscriptions/${var.subscription_id}`                                  | azure-vault-group, testing-23     |
+| tenant2  | `/subscriptions/${var.subscription_id}/resourceGroups/azure-vault-group` | azure-vault-group                 |
+
 
 **NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration).
 
