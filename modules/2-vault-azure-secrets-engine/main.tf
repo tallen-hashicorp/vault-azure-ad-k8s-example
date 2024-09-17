@@ -10,7 +10,9 @@ resource "vault_azure_secret_backend" "azure" {
   tenant_id       = var.tenant_id
   client_id       = var.client_id
   subscription_id = var.subscription_id
-  identity_token_audience = "api://AzureADTokenExchange"
+
+  # This is something like vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins
+  identity_token_audience = "${replace(var.vault_address, "https://", "")}/v1/platform-team/identity/oidc/plugins"
 }
 
 resource "vault_identity_oidc" "server" {
@@ -23,15 +25,17 @@ resource "vault_identity_oidc_client" "oidc_client" {
   access_token_ttl = 7200
 }
 
-# Create an example Azure role for managing resource groups
-resource "vault_azure_secret_backend_role" "resource_group_role" {
-  backend = vault_azure_secret_backend.azure.path
-  role    = var.role_name
+data "external" "azure_accessor" {
+  program = ["bash", "${path.module}/get_vault_accessor.sh"]
 
-  azure_roles {
-    role_name = "Owner"
-    scope =  "/subscriptions/${var.subscription_id}"
+  # Pass necessary information to the script via the query
+  query = {
+    vault_addr  = var.vault_address
+    vault_token = var.vault_token
+    vault_namespace = var.vault_namespace  
+    mount_path     = "${vault_azure_secret_backend.azure.path}"
   }
+
+  # Ensure the external data depends on vault_azure_secret_backend being created
+  depends_on = [vault_azure_secret_backend.azure]
 }
-
-

@@ -220,29 +220,23 @@ In order to have a Vault node that is available to HTTPS, and it must be network
 cd tf-ec2-vault
 terraform init
 terraform apply
+cd ..
 ```
 
 * Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
+    * If you forget the IP of the EC2 box run the following `terraform output public_ip`
 
-* SSH into Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
+* SSH `ssh ubuntu@vault.the-tech-tutorial.com`into Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
 
 ```bash
 sudo certbot --nginx -d vault.the-tech-tutorial.com
 ```
 
-* Install Vault:
+* Vault should allready be instealled for you
 
-```bash
-wget https://
+* Copy the license file over to `/tmp/vault.hclic` (eg. `scp vault.hclic ubuntu@vault.the-tech-tutorial.com:`).
 
-releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
-unzip vault_1.17.5+ent_linux_amd64.zip
-sudo mv vault /usr/bin
-```
-
-* Copy the license file over to `/tmp/vault.hclic`.
-
-* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance. **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
+* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance (eg. `scp jumpbox/vault.hcl ubuntu@vault.the-tech-tutorial.com:`). **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
 
 * Start Vault:
 
@@ -287,7 +281,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. The Audience must be the same as step 4 below.
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: use the `namespace_int_id` for `<NAMESPACE>` & `azure_mount_id` for `<AZURE_MOUNT_ACCESSOR>` outputed from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|

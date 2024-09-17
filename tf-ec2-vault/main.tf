@@ -11,13 +11,13 @@ variable "instance_count" {
   default = 1
 }
 
-# The Kay Pair name, this must be created mannualy before running
-variable "key_name" {
-  default = "tyler"
-}
-
 provider "aws" {
   region = "us-east-1"
+}
+
+resource "aws_key_pair" "default" {
+  key_name   = "my-key" # Name of the key in AWS
+  public_key = file("~/.ssh/id_rsa.pub") # Path to your public key file
 }
 
 ##################################################################
@@ -145,7 +145,7 @@ resource "aws_instance" "vault" {
   ami                         = "${data.aws_ami.ubuntu.id}"
   instance_type               = "t2.micro"
   vpc_security_group_ids      = ["${aws_security_group.ssh_access.id}", "${aws_security_group.boundary_access.id}", "${aws_security_group.internal_traffic.id}", "${aws_security_group.vault_access.id}"]
-  key_name                    = var.key_name
+  key_name                    = aws_key_pair.default.key_name
   associate_public_ip_address = true
 
   user_data = <<-EOF
@@ -153,7 +153,11 @@ resource "aws_instance" "vault" {
             # Update the package list and install Apache web server
             sudo apt-get update -y
             sudo apt update -y
-            sudo apt install nginx certbot python3-certbot-nginx unzip -y
+            sudo apt install nginx certbot python3-certbot-nginx unzip jq -y
+            sudo systemctl enable nginx
+            wget https://releases.hashicorp.com/vault/1.17.5+ent/vault_1.17.5+ent_linux_amd64.zip
+            unzip vault_1.17.5+ent_linux_amd64.zip
+            sudo mv vault /usr/bin
             EOF
 
   tags = {

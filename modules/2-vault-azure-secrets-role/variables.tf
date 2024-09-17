@@ -36,6 +36,11 @@ variable "subscription_id" {
   type        = string
 }
 
+variable "azure_mount_path" {
+  description = "value of vault_azure_secret_backend.azure.path"
+  type        = string
+}
+
 variable "role_name" {
   description = "Name of the Vault role for Azure"
   type        = string
