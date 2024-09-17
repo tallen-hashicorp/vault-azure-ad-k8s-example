@@ -246,27 +246,24 @@ In this section, we will integrate Workload Identity Federation (WIF) to enable 
 - Requires Vault 1.17 or later.
 - Added complexity:
     - `identity/oidc` needs to be configured and enabled.
-    - Ensure that Vault's openid-configuration and public JWKS APIs are network-reachable by Azure.
+    - Ensure that Vault's `openid-configuration` and public `JWKS` APIs are network-reachable by Azure.
     - Short-lived credentials enhance security but are more complex to integrate and manage frequent credential rotations effectively.
-- Ensure `api_addr` is set to external API URL.
-- Would not be able to have an Azure mount in the tenants that use the `client_id` & `client_secret` generated from the `platform-team` mount as they are so short-lived. You can, however, set up Azure mounts in each tenant with the same config as the platform team.
-    - An alternative would be to take advantage of `group_policy_application_mode`: [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing).
+- Ensure `api_addr` is set to the external API URL.
+- Would not be able to have an Azure mount in the tenants that use the `client_id` & `client_secret` generated from the `platform-team` mount as they are so short-lived. However, you can set up Azure mounts in each tenant with the same config as the platform team.
+    - An alternative would be to use `group_policy_application_mode`: [Secrets management across namespaces without hierarchical relationship](https://developer.hashicorp.com/vault/tutorials/enterprise/namespaces-secrets-sharing).
 
 ### Notes
 - HCP Vault is 1.15 🤦‍♂️
 - `vault_identity_oidc` gets created every time!
-- No matching federated identity record found for presented assertion audience 'https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins'
-    - This looks correct; however, I feel this is an MSFS cache issue, waiting until 12:00 to test again.
+- If you get the error `No matching federated identity record found for presented assertion audience 'https://<vault_url>:8200/v1/platform-team/identity/oidc/plugins'`, this is likely a cache issue. Wait for the cache to refresh and test again.
 - If you get `No matching federated identity record found for presented assertion issuer`, then the `vault_identity_oidc` in `modules/2-vault-azure-secrets-engine/main.tf` is incorrect.
 
 ## To Deploy
 For this, we need Vault deployed using HTTPS, and it must be network-reachable by Azure.
 
-One approach for this was to use a proxy; this did not work in my testing, and I've switched to deploying Vault on an EC2 node as described before. However, my previous proxy notes can be found [here](./vault-proxy-notes.md).
+In my previous tests, using a proxy didn't work, so I switched to deploying Vault on an EC2 instance. You can find the proxy notes [here](./vault-proxy-notes.md).
 
-In order to have a Vault node that is available to HTTPS, and it must be network-reachable by Azure, I am using a different Vault install on EC2.
-
-* Use the [tf-ec2-vault](./tf-ec2-vault/) repository to provision an EC2 instance.
+1. Use the [tf-ec2-vault](./tf-ec2-vault/) repository to provision an EC2 instance.
 
 ```bash
 cd tf-ec2-vault
@@ -275,33 +272,40 @@ terraform apply
 cd ..
 ```
 
-* Set up an A record on your personal Route 53 domain pointing to the EC2 instance, e.g., `vault.the-tech-tutorial.com`.
-    * If you forget the IP of the EC2 box run the following `terraform output public_ip`
-
-* SSH `ssh ubuntu@vault.the-tech-tutorial.com`into Use Certbot to obtain a Let’s Encrypt SSL certificate for your domain. **Replace domain with yours**:
+2. Set up an A record on your DNS provider (e.g., Route 53) pointing to the EC2 instance, e.g., `vault.example.com`. To retrieve the IP address of the EC2 instance, run:
 
 ```bash
-sudo certbot --nginx -d vault.the-tech-tutorial.com
+terraform output public_ip
 ```
 
-* Vault should already be installed for you.
+3. SSH into the EC2 instance:
 
-* Copy the license file over to `/tmp/vault.hclic` (eg. `scp vault.hclic ubuntu@vault.the-tech-tutorial.com:`).
+```bash
+ssh ubuntu@vault.example.com
+```
 
-* Copy the [vault.hcl](./jumpbox/vault.hcl) to the EC2 instance (eg. `scp jumpbox/vault.hcl ubuntu@vault.the-tech-tutorial.com:`). **Ensure you update the cert file locations to match yours** & **Ensure your DNS matches**.
+4. Use Certbot to obtain a Let's Encrypt SSL certificate for your domain. **Replace the domain with your own**:
 
-* Start Vault:
+```bash
+sudo certbot --nginx -d vault.example.com
+```
+
+5. Vault should already be installed. Copy the license file to `/tmp/vault.hclic` (e.g., `scp vault.hclic ubuntu@vault.example.com:`).
+
+6. Copy the `vault.hcl` configuration file to the EC2 instance (e.g., `scp jumpbox/vault.hcl ubuntu@vault.example.com:`). **Ensure you update the certificate file locations and DNS values to match your setup**.
+
+7. Start Vault:
 
 ```bash
 mkdir -p ./vault/data
 sudo vault server -config=vault.hcl
 ```
 
-* Configure Vault **from your Laptop**. **Amend to match your URL**:
+8. Configure Vault **from your local machine**. **Amend the URL to match your domain**:
 
 ```bash
 unset VAULT_TOKEN
-export VAULT_ADDR="https://vault.the-tech-tutorial.com:8200"
+export VAULT_ADDR="https://vault.example.com:8200"
 vault operator init
 
 vault operator unseal
@@ -326,7 +330,7 @@ export TF_VAR_tenant_id="<your-tenant-id>"
 export TF_VAR_client_id="<your-client-id>"
 ```
 
-1. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
+9. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
 
 ```bash
 cd 2-wif-initial-setup
@@ -334,34 +338,41 @@ terraform init
 terraform apply
 ```
 
-Now we need to configure Azure. A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers).
+## Configuring Azure and Vault WIF
 
-2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
+A more detailed guide can be found for Vault [here](https://developer.hashicorp.com/vault/docs/secrets/azure#plugin-workload-identity-federation-wif) and for Azure [here](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#other-identity-providers).
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: You can use the azure_subject_identifier outputted from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
+### Configuring Azure Federated Credentials
 
-| Field              | Value                                               |
-|--------------------|-----------------------------------------------------|
-| Issuer             | `https://{VAULT_URL}:8200/v1/platform-team/identity/oidc/plugins` |
-| Subject identifier | `plugin-identity:0AUpw:secret:azure_38b36e27`         |
-| Name               | `Vault`                                             |
-| Audience           |  `vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins` |
+1. Find your Azure App Registration, likely named `Vault Platform Team`, in the Azure portal. Navigate to **Certificates & Secrets** > **Federated Credentials** and select **Add Credential**.
 
+2. Set the following values, replacing the URL with your Vault URL. Update the Subject Identifier to match your setup, e.g., `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **Note:** You can use the `azure_subject_identifier` output from `2-wif-initial-setup`.
+
+| Field              | Value                                                   |
+|--------------------|---------------------------------------------------------|
+| Issuer             | `https://<vault_url>:8200/v1/platform-team/identity/oidc/plugins` |
+| Subject identifier | `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>` |
+| Name               | `Vault`                                                 |
+| Audience           |  `<vault_url>:8200/v1/platform-team/identity/oidc/plugins` |
 
 ![azure](./docs/azure-screenshot1.png)
 
-4. Now we will set up the Azure Secrets Engine Role in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
+### Setting Up the Azure Secrets Engine Role
+
+1. Set up the Azure Secrets Engine Role in the platform team account. Make sure the necessary environment variables (`TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id`) are set. If not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team).
 
 ```bash
-cd ..
 cd 2-wif-role-tenant1
 terraform init
 terraform apply
 ```
 
-5. You can also repeat this for `2-wif-role-tenant1`
+2. Repeat this process for other tenant roles as needed.
 
-6. You can test this with
+### Testing the Setup
+
+1. To test the setup with Vault, you can use the following commands:
+
 ```bash
 export VAULT_NAMESPACE="platform-team"
 vault read azure/config
@@ -371,25 +382,24 @@ vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
 
-7. Let's also test this in Azure to see the scope replacing `<CLIENT_ID>` & `<CLIENT_SECRET>`, `TF_VAR_tenant_id` should already be set
+2. To test in Azure, use the following command, replacing `<CLIENT_ID>` and `<CLIENT_SECRET>` with the values outputted from Terraform. The `TF_VAR_tenant_id` should already be set.
+
 ```bash
 az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
 az group list --output table
 ```
 
-In my testing, I had the groups azure-vault-group & testing-23, here is the result confirming the scope does work:
+In my testing, I had groups `azure-vault-group` and `testing-23`. Here’s the result confirming the scope works:
 
 | Name     | Assigned Scope                                                           | Groups Visible                    |
 |----------|--------------------------------------------------------------------------|-----------------------------------|
 | tenant1  | `/subscriptions/${var.subscription_id}`                                  | azure-vault-group, testing-23     |
 | tenant2  | `/subscriptions/${var.subscription_id}/resourceGroups/azure-vault-group` | azure-vault-group                 |
 
+**NOTE:** You can test the configuration by visiting `https://<vault_url>:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration`.
 
-**NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration).
+## Choosing Between Dynamic or Existing Service Principals
 
-## Choosing between dynamic or existing service principals
-Dynamic service principals are preferred if the desired Azure resources can be provided via the RBAC system and Azure roles defined in the Vault role. This form of credential is completely decoupled from any other clients, is not subject to permission changes after issuance, and offers the best audit granularity.
+Dynamic service principals are preferred if Azure resources can be provided via the RBAC system and roles defined in the Vault role. This type of credential is decoupled from other clients, offers better audit granularity, and is not affected by permission changes after issuance.
 
-Access to some Azure services cannot be provided with the RBAC system, however. In these cases, an existing service principal can be set up with the necessary access, and Vault can create new passwords for this service principal. Any changes to the service principal permissions affect all clients. Furthermore, Azure does not provide any logging with regard to which credential was used for an operation.
-
-An important limitation when using an existing service principal is that Azure limits the number of passwords for a single application. This limit is based on application object size and isn't firmly specified, but in practice, hundreds of passwords can be issued per application. An error will be returned if the object size is reached. This limit can be managed by reducing the role TTL or by creating another Vault role against a different Azure service principal configured with the same permissions.
+However, some Azure services may require an existing service principal. This service principal will have the necessary access, and Vault can generate new passwords for it. Any changes to its permissions will affect all clients. Azure also limits the number of passwords for a service principal based on object size, which can lead to errors if exceeded. This can be managed by reducing the role TTL or creating another Vault role for a different service principal with similar permissions.
