@@ -11,7 +11,7 @@ resource "vault_azure_secret_backend_role" "resource_group_role" {
 
   azure_roles {
     role_name = "Owner"
-    scope =  "/subscriptions/${var.subscription_id}"
+    scope =  var.azure_scope
   }
 }
 

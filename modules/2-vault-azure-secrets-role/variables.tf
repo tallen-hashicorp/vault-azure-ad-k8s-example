@@ -14,8 +14,7 @@ variable "vault_namespace" {
   type        = string
 }
 
-variable "subscription_id" {
-  description = "Azure Subscription ID"
+variable "azure_scope" {
   type        = string
 }
 

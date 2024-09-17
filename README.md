@@ -297,7 +297,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 ```bash
 cd ..
-cd 2-wif-role-tenant
+cd 2-wif-role-tenant1
 terraform init
 terraform apply
 ```
@@ -307,7 +307,7 @@ terraform apply
 export VAULT_NAMESPACE="platform-team"
 vault read azure/config
 vault list azure/roles
-vault read azure/creds/platform-team
+vault read azure/creds/tenant1
 unset VAULT_NAMESPACE
 ```
 
