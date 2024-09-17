@@ -11,6 +11,57 @@ Before proceeding, ensure you have the following:
 - An Azure account with necessary permissions
 - A Vault Enterprise license
 
+# Setting Up Azure Credentials
+
+We'll use an Azure Application's `client_id` and `client_secret` for all the following configurations. This guide will show you how to use Terraform (TF) to set this up.
+
+## Authenticate to Azure
+
+Before running the Terraform configuration, we need to authenticate to Azure. Follow these steps:
+
+1. Log in to Azure:
+
+```bash
+az login
+```
+
+2. Once logged in, set your subscription ID:
+
+```bash 
+export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
+```
+
+## Running Terraform
+
+Now, navigate to the setup directory and run the following commands to initialize and apply the Terraform configuration:
+
+```bash
+cd 0-azure-setup
+terraform init
+terraform apply
+```
+
+## Set the Required Environment Variables
+
+After running the Terraform configuration, you can set the environment variables based on the outputs. 
+
+**NOTE:** To get the `client_secret`, run `terraform output client_secret`.
+
+```bash
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+export TF_VAR_subscription_id=""
+```
+
+Alternatively, use the following command to set these variables automatically:
+
+```bash
+source ../set-azure-creds.sh
+```
+
+---
+
 ## Starting Vault
 
 We will use a local Kubernetes cluster with Vault Enterprise deployed via Helm.
@@ -127,7 +178,7 @@ Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by fo
 
 ### Step 1: Deploy Azure Secret Engine for Platform Team
 
-Set the environment variables:
+Set the environment variables if you have not already:
 
 ```bash
 export TF_VAR_tenant_id=""
