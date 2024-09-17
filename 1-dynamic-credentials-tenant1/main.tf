@@ -1,7 +1,7 @@
 provider "vault" {
   address   = "http://127.0.0.1:8200"
   token     = var.vault_token #This should use a auth mount with a policy not root like we are using here
-  namespace = "platform-team"
+  namespace = "platform-team-1"
 }
 
 data "vault_generic_secret" "platform-team" {
