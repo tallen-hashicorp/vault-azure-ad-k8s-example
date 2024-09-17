@@ -232,7 +232,7 @@ cd ..
 sudo certbot --nginx -d vault.the-tech-tutorial.com
 ```
 
-* Vault should allready be instealled for you
+* Vault should already be installed for you.
 
 * Copy the license file over to `/tmp/vault.hclic` (eg. `scp vault.hclic ubuntu@vault.the-tech-tutorial.com:`).
 
@@ -281,7 +281,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: You can use the azure_subject_identifier outputed from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: You can use the azure_subject_identifier outputted from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
@@ -314,13 +314,13 @@ vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
 
-7. Lets also test this in Azure to see the scope replacing `<CLIENT_ID>` & `<CLIENT_SECRET>`, `TF_VAR_tenant_id` should already be set
+7. Let's also test this in Azure to see the scope replacing `<CLIENT_ID>` & `<CLIENT_SECRET>`, `TF_VAR_tenant_id` should already be set
 ```bash
 az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
 az group list --output table
 ```
 
-In my testing I had the groups azure-vault-group & testing-23, here is the result confirming the scope does work
+In my testing, I had the groups azure-vault-group & testing-23, here is the result confirming the scope does work:
 
 | Name     | Assigned Scope                                                           | Groups Visible                    |
 |----------|--------------------------------------------------------------------------|-----------------------------------|
