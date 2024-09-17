@@ -39,8 +39,23 @@ Now, navigate to the setup directory and run the following commands to initializ
 cd 0-azure-setup
 terraform init
 terraform apply
-cd ..
 ```
+
+## Set the required env vars for later
+Now we have this we can set the envrioment variables based on the outputs. **NOTE To get the `client_secret` run `terraform output client_secret`**
+
+```bash
+export TF_VAR_tenant_id=""
+export TF_VAR_client_id=""
+export TF_VAR_client_secret=""
+export TF_VAR_subscription_id=""
+```
+
+Alternativly you use the following to set this automaitcly:
+```bash
+source ../set-azure-creds.sh
+```
+
 
 ---
 
@@ -160,7 +175,7 @@ Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by fo
 
 ### Step 1: Deploy Azure Secret Engine for Platform Team
 
-Set the environment variables:
+Set the environment variables if you have not already:
 
 ```bash
 export TF_VAR_tenant_id=""

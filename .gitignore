@@ -40,3 +40,4 @@ terraform.rc
 notes.md
 init.json
 pid
+azure_creds.json

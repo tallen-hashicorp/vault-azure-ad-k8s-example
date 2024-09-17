@@ -8,9 +8,9 @@ data "azurerm_subscription" "primary" {}
 
 data "azurerm_client_config" "vault_platform_team" {}
 
-# Define resource groups using dynamic for_each loop
-resource "azurerm_resource_group" "resource_groups" {
-  for_each = var.resource_group_names
+# Define resource groups using dynamic for_each loop with toset conversion
+resource "azurerm_resource_group" "vault_platform_team_rg" {
+  for_each = toset(var.resource_group_names)
   name     = each.value
   location = var.location
 }
