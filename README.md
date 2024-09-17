@@ -174,7 +174,8 @@ This section covers dynamic credential generation using the parent namespace Azu
 
 ## To Deploy
 
-Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID by following the steps in the [Azure Credentials Setup Guide](./azure-credentials-setup.md).
+Obtain your Azure Tenant ID, Client ID, Client Secret, and Subscription ID. If you've already followed the steps in the [Setting Up Azure Credentials](#setting-up-azure-credentials) section, you can skip step one. Otherwise, refer to the [Azure Credentials Setup Guide](./azure-credentials-setup.md) for detailed instructions.
+
 
 ### Step 1: Deploy Azure Secret Engine for Platform Team
 
