@@ -316,9 +316,14 @@ Next, let's configure Vault:
 ```bash
 export TF_VAR_vault_addr=$VAULT_ADDR
 export TF_VAR_vault_token=$VAULT_TOKEN
-export TF_VAR_subscription_id=""
-export TF_VAR_tenant_id=""
-export TF_VAR_client_id=""
+```
+
+If your Azure environment variables are not already set, configure them as follows:
+
+```bash
+export TF_VAR_subscription_id="<your-subscription-id>"
+export TF_VAR_tenant_id="<your-tenant-id>"
+export TF_VAR_client_id="<your-client-id>"
 ```
 
 1. Now we can set up Vault. Run the following to set up the initial namespace, etc., in Vault:
