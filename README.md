@@ -302,14 +302,31 @@ terraform init
 terraform apply
 ```
 
+5. You can also repeat this for `2-wif-role-tenant1`
+
 6. You can test this with
 ```bash
 export VAULT_NAMESPACE="platform-team"
 vault read azure/config
 vault list azure/roles
 vault read azure/creds/tenant1
+vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
+
+7. Lets also test this in Azure to see the scope replacing `<CLIENT_ID>` & `<CLIENT_SECRET>`, `TF_VAR_tenant_id` should already be set
+```bash
+az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
+az group list --output table
+```
+
+In my testing I had the groups azure-vault-group & testing-23, here is the result confirming the scope does work
+
+| Name     | Assigned Scope                                                           | Groups Visible                    |
+|----------|--------------------------------------------------------------------------|-----------------------------------|
+| tenant1  | `/subscriptions/${var.subscription_id}`                                  | azure-vault-group, testing-23     |
+| tenant2  | `/subscriptions/${var.subscription_id}/resourceGroups/azure-vault-group` | azure-vault-group                 |
+
 
 **NOTE:** You can test that the keys are correct by hitting this [URL](https://vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins/.well-known/openid-configuration).
 
