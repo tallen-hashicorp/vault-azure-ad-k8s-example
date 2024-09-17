@@ -42,3 +42,7 @@ output "azure_mount_id" {
 output "azure_mount_path" {
   value = module.tier-1-azure-ad.azure_mount_path
 }
+
+output "azure_subject_identifier" {
+  value = module.tier-1-azure-ad.azure_subject_identifier
+}

@@ -281,7 +281,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 2. Find your app registration created earlier, probably called `Vault Platform Team` in the app registrations section of the Microsoft Entra admin center. Select **Certificates & Secrets** in the left nav pane, select the **Federated Credentials** tab, and select **Add Credential**.
 
-3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: use the `namespace_int_id` for `<NAMESPACE>` & `azure_mount_id` for `<AZURE_MOUNT_ACCESSOR>` outputed from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
+3. Set the following values, replacing the URL with your Vault URL. Change the Subject Identifier to match something similar to this `plugin-identity:0AUpw:secret:azure_38b36e27` `plugin-identity:<NAMESPACE>:secret:<AZURE_MOUNT_ACCESSOR>`. **NOTE: You can use the azure_subject_identifier outputed from `2-wif-initial-setup`** The Audience must be the same as step 4 below.
 
 | Field              | Value                                               |
 |--------------------|-----------------------------------------------------|
@@ -293,13 +293,7 @@ Now we need to configure Azure. A more detailed guide can be found for Vault [he
 
 ![azure](./docs/azure-screenshot1.png)
 
-4. Next, configure the `identity_token_audience` variable we will use in the next step. Replace `{VAULT_HOST}` in the following command (this does not need `http://`, so it will be something like `vault.example/v1/identity/oidcs/plugins`):
-
-```bash
-export TF_VAR_identity_token_audience="vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins"
-```
-
-5. Now we will set up the Azure Secrets Engine in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
+4. Now we will set up the Azure Secrets Engine Role in the platform team account. You probably have `TF_VAR_client_id`, `TF_VAR_tenant_id`, and `TF_VAR_subscription_id` already set, but if not, go back to [Step 1: Deploy Azure Secret Engine for Platform Team](#step-1-deploy-azure-secret-engine-for-platform-team). 
 
 ```bash
 cd ..
