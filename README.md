@@ -13,7 +13,7 @@ Before proceeding, ensure you have the following:
 
 # Setting Up Azure Credentials
 
-We'll use an Azure Application's `client_id` and `client_secret` for the basis of all the following configurations. This guide will show you how to use Terraform (TF) to set this up.
+We'll use an Azure Application's `client_id` and `client_secret` for all the following configurations. This guide will show you how to use Terraform (TF) to set this up.
 
 ## Authenticate to Azure
 
@@ -21,15 +21,15 @@ Before running the Terraform configuration, we need to authenticate to Azure. Fo
 
 1. Log in to Azure:
 
-    ```bash
-    az login
-    ```
+```bash
+az login
+```
 
 2. Once logged in, set your subscription ID:
 
-    ```bash 
-    export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
-    ```
+```bash 
+export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
+```
 
 ## Running Terraform
 
@@ -41,8 +41,11 @@ terraform init
 terraform apply
 ```
 
-## Set the required env vars for later
-Now we have this we can set the envrioment variables based on the outputs. **NOTE To get the `client_secret` run `terraform output client_secret`**
+## Set the Required Environment Variables
+
+After running the Terraform configuration, you can set the environment variables based on the outputs. 
+
+**NOTE:** To get the `client_secret`, run `terraform output client_secret`.
 
 ```bash
 export TF_VAR_tenant_id=""
@@ -51,11 +54,11 @@ export TF_VAR_client_secret=""
 export TF_VAR_subscription_id=""
 ```
 
-Alternativly you use the following to set this automaitcly:
+Alternatively, use the following command to set these variables automatically:
+
 ```bash
 source ../set-azure-creds.sh
 ```
-
 
 ---
 
