@@ -27,3 +27,8 @@ variable "role_name" {
   description = "Name of the Vault role for Azure"
   type        = string
 }
+
+variable "federated_credential_id" {
+  description   = "A federated_credential_id is optional however allows for adding depends_on to other resources."
+  default       = "optional"
+}

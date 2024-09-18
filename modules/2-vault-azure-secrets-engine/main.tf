@@ -12,7 +12,7 @@ resource "vault_azure_secret_backend" "azure" {
   subscription_id = var.subscription_id
 
   # This is something like vault.the-tech-tutorial.com:8200/v1/platform-team/identity/oidc/plugins
-  identity_token_audience = "${replace(var.vault_address, "https://", "")}/v1/platform-team/identity/oidc/plugins"
+  identity_token_audience = "${replace(var.vault_address, "https://", "")}/v1/${var.vault_namespace}/identity/oidc/plugins"
 }
 
 resource "vault_identity_oidc" "server" {

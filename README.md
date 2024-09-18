@@ -2,6 +2,8 @@
 
 This repository demonstrates how to use HashiCorp Vault Enterprise to enable self-service provisioning of Azure Kubernetes (K8s) resources. We will walk through the setup of Vault, dynamic credential generation using Azure AD, and the use of Terraform modules to manage these configurations.
 
+If you want to run this all at once then jump just to [# 3. Using TF to create orignal creds - all in one](#3-using-tf-to-create-orignal-creds---all-in-one)
+
 ## Prerequisites
 
 Before proceeding, ensure you have the following:
@@ -403,3 +405,70 @@ In my testing, I had groups `azure-vault-group` and `testing-23`. Here’s the r
 Dynamic service principals are preferred if Azure resources can be provided via the RBAC system and roles defined in the Vault role. This type of credential is decoupled from other clients, offers better audit granularity, and is not affected by permission changes after issuance.
 
 However, some Azure services may require an existing service principal. This service principal will have the necessary access, and Vault can generate new passwords for it. Any changes to its permissions will affect all clients. Azure also limits the number of passwords for a service principal based on object size, which can lead to errors if exceeded. This can be managed by reducing the role TTL or creating another Vault role for a different service principal with similar permissions.
+
+## 3. Using Terraform to Create Original Credentials - All in One
+
+Before proceeding, ensure you have a running Vault instance. You can follow steps 1 to 8 from [this guide](#to-deploy-1).
+
+### Prerequisites:
+- **Azure CLI** installed
+- **Terraform** installed
+- **Vault** running
+- An Azure account with necessary permissions
+- A Vault Enterprise license
+
+### Steps:
+
+1. **Log in to Azure:**
+
+Ensure you are authenticated with the correct Azure subscription:
+   
+```bash
+az login
+```
+
+2. **Set Environment Variables:**
+
+Export the required environment variables to set your Terraform variables:
+   
+```bash
+export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
+export VAULT_ADDR="https://vault.example.com:8200"
+export VAULT_TOKEN="hvs.******"
+export TF_VAR_vault_addr="$VAULT_ADDR"
+export TF_VAR_vault_token="$VAULT_TOKEN"
+```
+
+**Note:** Replace `<SUBSCRIPTION_ID>` and `hvs.******` with your actual subscription ID and Vault token.
+
+3. **Run Terraform to Set Up Azure App and Vault Configuration:**
+```bash
+unset VAULT_NAMESPACE
+cd 3-all-in-one-platform-team
+terraform init
+terraform apply
+```
+
+**Note:** Review the output to ensure that everything is set up correctly.
+
+4. **Test the Configuration:**
+
+Once the Terraform setup is complete, you can verify the configuration by interacting with the Vault instance:
+
+Set the namespace to match your setup:
+
+```bash
+export VAULT_NAMESPACE="vault-platform-all-in-one"
+vault read azure/config
+vault list azure/roles
+vault read azure/creds/tenant1
+vault read azure/creds/tenant2
+unset VAULT_NAMESPACE
+```
+
+Testing the azure creds
+
+```bash
+az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
+az group list --output table
+```

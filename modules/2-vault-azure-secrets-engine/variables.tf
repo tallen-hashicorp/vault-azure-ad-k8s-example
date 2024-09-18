@@ -35,8 +35,3 @@ variable "subscription_id" {
   description = "Azure Subscription ID"
   type        = string
 }
-
-variable "role_name" {
-  description = "Name of the Vault role for Azure"
-  type        = string
-}
