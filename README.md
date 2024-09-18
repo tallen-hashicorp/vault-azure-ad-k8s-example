@@ -472,3 +472,30 @@ Testing the azure creds
 az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
 az group list --output table
 ```
+
+### 5. **Use the Tenant Credentials**
+
+This step is not implemented in this demo. However, you can dynamically retrieve the generated credentials using Vault's **Azure secrets engine**.
+
+To retrieve the credentials from Vault, you can use:
+
+```hcl
+data "vault_generic_secret" "platform_team" {
+  path = "azure/creds/platform-team"
+}
+```
+
+You can then pass these credentials to the Azure provider configuration, like this:
+
+```hcl
+provider "azurerm" {
+  subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
+  client_id       = data.vault_generic_secret.platform_team.data["client_id"]
+  client_secret   = data.vault_generic_secret.platform_team.data["client_secret"]
+}
+```
+
+### Notes:
+- You still need to provide `subscription_id` and `tenant_id` as Terraform variables (`var.subscription_id` and `var.tenant_id`).
+- The credentials (`client_id` and `client_secret`) are dynamically retrieved from Vault using the `vault_generic_secret` data source.
