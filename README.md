@@ -406,28 +406,42 @@ Dynamic service principals are preferred if Azure resources can be provided via 
 
 However, some Azure services may require an existing service principal. This service principal will have the necessary access, and Vault can generate new passwords for it. Any changes to its permissions will affect all clients. Azure also limits the number of passwords for a service principal based on object size, which can lead to errors if exceeded. This can be managed by reducing the role TTL or creating another Vault role for a different service principal with similar permissions.
 
-# 3. Using TF to create orignal creds - all in one
+## 3. Using Terraform to Create Original Credentials - All in One
 
-Before running this ensure you have a vault running, you can use steps 1 to 8 from [here](#to-deploy-1)
+Before proceeding, ensure you have a running Vault instance. You can follow steps 1 to 8 from [this guide](#to-deploy-1).
 
-1. Log in to Azure:
+### Prerequisites:
+- **Azure CLI** installed
+- **Terraform** installed
+- **Vault** running
+- An Azure account with necessary permissions
+- A Vault Enterprise license
 
+### Steps:
+
+1. **Log in to Azure:**
+
+Ensure you are authenticated with the correct Azure subscription:
+   
 ```bash
 az login
 ```
 
-2. Once logged in, set your envrioment vars to set the TF variables
+2. **Set Environment Variables:**
 
-```bash 
+Export the required environment variables to set your Terraform variables:
+   
+```bash
 export TF_VAR_subscription_id="<SUBSCRIPTION_ID>"
 export VAULT_ADDR="https://vault.example.com:8200"
-export VAULT_TOKEN=hvs.******
-export TF_VAR_vault_addr=$VAULT_ADDR
-export TF_VAR_vault_token=$VAULT_TOKEN
+export VAULT_TOKEN="hvs.******"
+export TF_VAR_vault_addr="$VAULT_ADDR"
+export TF_VAR_vault_token="$VAULT_TOKEN"
 ```
 
-3. Run terraform to sectup Azure app, create new namespace in Vault and setup the AD secrets engine
+**Note:** Replace `<SUBSCRIPTION_ID>` and `hvs.******` with your actual subscription ID and Vault token.
 
+3. **Run Terraform to Set Up Azure App and Vault Configuration:**
 ```bash
 unset VAULT_NAMESPACE
 cd 3-all-in-one-platform-team
@@ -435,11 +449,19 @@ terraform init
 terraform apply
 ```
 
-4. Test
+**Note:** Review the output to ensure that everything is set up correctly.
+
+4. **Test the Configuration:**
+
+Once the Terraform setup is complete, you can verify the configuration by interacting with the Vault instance:
+
+Set the namespace to match your setup:
+
 ```bash
 export VAULT_NAMESPACE="vault-platform-all-in-one"
 vault read azure/config
 vault list azure/roles
 vault read azure/creds/tenant1
+vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
