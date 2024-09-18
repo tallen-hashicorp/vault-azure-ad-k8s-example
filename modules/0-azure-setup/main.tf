@@ -30,9 +30,16 @@ resource "azuread_service_principal_password" "vault_platform_team_sp_password" 
   end_date_relative    = "8760h" # 1 year validity, adjust as needed
 }
 
-# Assign Contributor role to the App Registration for full access to subscription
-resource "azurerm_role_assignment" "vault_platform_team_role_assignment" {
+# Assign Owner role to the App Registration for full access to subscription
+resource "azurerm_role_assignment" "vault_platform_team_role_assignment_owner" {
   principal_id         = azuread_service_principal.vault_platform_team_sp.id
   role_definition_name = "Owner"
+  scope                = data.azurerm_subscription.primary.id
+}
+
+# Assign User Access Administrator role to allow the SP to assign roles
+resource "azurerm_role_assignment" "vault_platform_team_role_assignment_uaa" {
+  principal_id         = azuread_service_principal.vault_platform_team_sp.id
+  role_definition_name = "User Access Administrator"
   scope                = data.azurerm_subscription.primary.id
 }
