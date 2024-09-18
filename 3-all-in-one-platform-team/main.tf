@@ -2,8 +2,8 @@
 module "azure_setup" {
   source                = "../modules/0-azure-setup"
   location              = "West Europe"
-  app_registration_name = "${var.app_name}-app"
-  resource_group_names  = ["${var.app_name}-rg-1", "${var.app_name}-rg-2"]
+  app_registration_name = "${var.app_name}-app" #This could be tenant rather then platform team
+  resource_group_names  = ["${var.app_name}-rg-1", "${var.app_name}-rg-2"] # This is just for demo
   subscription_id       = var.subscription_id
 }
 
