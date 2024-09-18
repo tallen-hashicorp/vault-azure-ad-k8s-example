@@ -18,3 +18,7 @@ output "azure_mount_path" {
 output "azure_subject_identifier" {
   value = "plugin-identity:${module.vault-namespace.namespace_int_id}:secret:${module.tier-1-azure-ad.azure_mount_id}"
 }
+
+output "azure_app_id" {
+  value = module.azure_setup.client_id
+}

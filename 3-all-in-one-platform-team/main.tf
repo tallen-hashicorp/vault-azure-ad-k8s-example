@@ -59,3 +59,11 @@ module "tenant2-azure-ad" {
   azure_scope       = "/subscriptions/${var.subscription_id}/resourceGroups/${var.app_name}-rg-2" #This can be an array I just have not implmented that yet
   federated_credential_id = module.federated_credentials.federated_credential_id #Needed for dependancy management 
 }
+
+resource "null_resource" "admin_consent" {
+  provisioner "local-exec" {
+    command = "../grant_admin_consent.sh"
+  }
+
+  depends_on = [module.azure_setup]
+}
