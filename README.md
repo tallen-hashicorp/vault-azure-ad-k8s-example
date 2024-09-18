@@ -465,3 +465,10 @@ vault read azure/creds/tenant1
 vault read azure/creds/tenant2
 unset VAULT_NAMESPACE
 ```
+
+Testing the azure creds
+
+```bash
+az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant $TF_VAR_tenant_id
+az group list --output table
+```
