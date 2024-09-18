@@ -408,6 +408,8 @@ However, some Azure services may require an existing service principal. This ser
 
 # 3. Using TF to create orignal creds - all in one
 
+Before running this ensure you have a vault running, you can use steps 1 to 8 from [here](#to-deploy-1)
+
 1. Log in to Azure:
 
 ```bash
@@ -431,4 +433,13 @@ unset VAULT_NAMESPACE
 cd 3-all-in-one-platform-team
 terraform init
 terraform apply
+```
+
+4. Test
+```bash
+export VAULT_NAMESPACE="vault-platform-all-in-one"
+vault read azure/config
+vault list azure/roles
+vault read azure/creds/tenant1
+unset VAULT_NAMESPACE
 ```

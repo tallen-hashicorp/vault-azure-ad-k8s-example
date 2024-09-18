@@ -3,6 +3,11 @@ output "client_id" {
   value       = azuread_application.vault_platform_team_app.client_id
 }
 
+output "object_id" {
+  description = "The Object ID of the Azure App Registration"
+  value       = azuread_application.vault_platform_team_app.object_id
+}
+
 output "client_secret" {
   description = "The Client Secret (password) for the Azure Service Principal"
   value       = azuread_service_principal_password.vault_platform_team_sp_password.value
