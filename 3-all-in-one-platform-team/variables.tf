@@ -5,7 +5,7 @@ variable "subscription_id" {
 
 variable "app_name" {
   description   = "Will be used for azure app and namespace naming"
-  default       = "vault-platform-all-in-one"
+  default       = "vault-platform-all-in-one-oct"
   type         = string
 }
 
