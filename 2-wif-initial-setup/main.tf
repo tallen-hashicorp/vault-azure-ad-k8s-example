@@ -19,8 +19,6 @@ module "tier-1-azure-ad" {
   vault_token   = var.vault_token
   vault_namespace = "platform-team" # This should use data from the other module
 
-  role_name = "platform-team"
-
   tenant_id                 = var.tenant_id
   client_id                 = var.client_id
   subscription_id           = var.subscription_id
