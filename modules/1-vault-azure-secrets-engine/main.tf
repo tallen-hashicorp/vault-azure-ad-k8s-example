@@ -19,7 +19,7 @@ resource "vault_azure_secret_backend_role" "resource_group_role" {
   role    = var.role_name
 
   azure_roles {
-    role_name = "Owner"
+    role_name = "Owner" # Should probably be contributor
     scope =  "/subscriptions/${var.subscription_id}"
   }
 
